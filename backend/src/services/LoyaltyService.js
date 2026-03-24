@@ -63,10 +63,83 @@ class LoyaltyService {
   async earnPoints(loyaltyId, orderId, orderTotal) {
     const pointsToAdd = Math.floor(orderTotal / POINTS_PER_TND);
     if (pointsToAdd <= 0) return { points_added: 0 };
+    const eventKey = orderId ? `order:${orderId}:earn` : null;
+    const tx = await pool.connect();
+    try {
+      await tx.query('BEGIN');
+      const txn = await LoyaltyModel.createTransaction(
+        loyaltyId,
+        orderId,
+        pointsToAdd,
+        0,
+        { source_type: 'order', source_id: orderId || null, event_key: eventKey, note: 'Auto credit on order completion' },
+        tx
+      );
+      if (!txn) {
+        await tx.query('ROLLBACK');
+        return { points_added: 0, duplicated: true };
+      }
+      const account = await LoyaltyModel.addPoints(loyaltyId, pointsToAdd, tx);
+      await tx.query('COMMIT');
+      return { account, points_added: pointsToAdd };
+    } catch (err) {
+      await tx.query('ROLLBACK');
+      throw err;
+    } finally {
+      tx.release();
+    }
+  }
 
-    const account = await LoyaltyModel.addPoints(loyaltyId, pointsToAdd);
-    await LoyaltyModel.createTransaction(loyaltyId, orderId, pointsToAdd, 0);
-    return { account, points_added: pointsToAdd };
+  /**
+   * Créditer le portefeuille fidélité après une partie (récompense calculée côté serveur dans GameService).
+   * Pas de commande associée : order_id est NULL dans loyalty_transactions.
+   */
+  async earnGameRewardPoints(loyaltyId, pointsToAdd) {
+    const points = Math.floor(Number(pointsToAdd) || 0);
+    if (!loyaltyId || points <= 0) {
+      return { points_added: 0, account: null };
+    }
+    const account = await LoyaltyModel.addPoints(loyaltyId, points);
+    await LoyaltyModel.createTransaction(
+      loyaltyId,
+      null,
+      points,
+      0,
+      { source_type: 'game', source_id: null, event_key: null, note: 'Legacy game reward credit' }
+    );
+    return { account, points_added: points };
+  }
+
+  async earnGameRewardPointsForSession(loyaltyId, gameSessionId, pointsToAdd) {
+    const points = Math.floor(Number(pointsToAdd) || 0);
+    if (!loyaltyId || !gameSessionId || points <= 0) {
+      return { points_added: 0, account: null };
+    }
+    const eventKey = `game_session:${gameSessionId}:earn`;
+    const tx = await pool.connect();
+    try {
+      await tx.query('BEGIN');
+      const txn = await LoyaltyModel.createTransaction(
+        loyaltyId,
+        null,
+        points,
+        0,
+        { source_type: 'game_session', source_id: gameSessionId, event_key: eventKey, note: 'Auto credit on game score submission' },
+        tx
+      );
+      if (!txn) {
+        await tx.query('ROLLBACK');
+        return { points_added: 0, duplicated: true };
+      }
+      const account = await LoyaltyModel.addPoints(loyaltyId, points, tx);
+      await tx.query('COMMIT');
+      return { account, points_added: points };
+    } catch (err) {
+      await tx.query('ROLLBACK');
+      throw err;
+    } finally {
+      tx.release();
+    }
   }
 
   /**

@@ -5,12 +5,12 @@ const { authenticateToken, authorizeRoles } = require('../middleware');
 
 // Public endpoints
 router.get('/', ProductController.list);
-router.get('/:id', ProductController.get);
 router.get('/trending/list', (req, res, next) => {
   // force trending filter
   req.query.is_trending = 'true';
   return ProductController.list(req, res, next);
 });
+router.get('/:id', ProductController.get);
 
 // Admin-only management endpoints
 router.post('/', authenticateToken, authorizeRoles('staff','admin'), ProductController.create);

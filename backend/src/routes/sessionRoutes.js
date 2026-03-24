@@ -33,6 +33,51 @@ router.post('/', async (req, res, next) => {
 });
 
 /**
+ * GET /api/sessions/scan/:qr_code
+ * Scan a QR code → auto-create session linked to the table
+ * This is the URL encoded in the physical QR code on each table
+ */
+router.get('/scan/:qr_code', async (req, res, next) => {
+  try {
+    const { qr_code } = req.params;
+
+    // Find the table by its QR code
+    const TableModel = require('../models/TableModel');
+    const table = await TableModel.findByQrCode(qr_code);
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        error: 'QR code invalide — aucune table trouvée.'
+      });
+    }
+
+    if (!table.is_active) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cette table est actuellement désactivée.'
+      });
+    }
+
+    // Auto-create a session linked to this table
+    const session = await SessionModel.create(table.id);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: session.id,
+        token: session.token,
+        table_id: table.id,
+        table_number: table.table_number,
+        message: `Bienvenue à la table ${table.table_number} ! Votre session est prête.`
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /api/sessions/loyalty
  * Enroll or link customer to loyalty account
  * Body: { session_token, customer_name (required), phone_number (optional), customer_id_number (optional) }

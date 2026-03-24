@@ -1,5 +1,7 @@
 const pool = require('../database/pool');
 
+const OPTION_TYPES = ['size', 'milk', 'sugar', 'addon'];
+
 class ProductModel {
   /**
    * Récupérer tous les produits actifs avec leurs catégories
@@ -110,6 +112,79 @@ class ProductModel {
     `;
     const result = await pool.query(query, [limit]);
     return result.rows;
+  }
+
+  /**
+   * Insère les lignes product_options (client DB déjà fourni — pas de transaction ici).
+   */
+  async _insertProductOptions(productId, options, client) {
+    if (!Array.isArray(options) || options.length === 0) return;
+    const insertSql = `
+      INSERT INTO product_options (product_id, option_type, name, price_modifier)
+      VALUES ($1, $2, $3, $4)
+    `;
+    for (const opt of options) {
+      if (!opt || typeof opt !== 'object') continue;
+      const optionType = opt.option_type;
+      if (!OPTION_TYPES.includes(optionType)) {
+        throw new Error(`option_type invalide: ${optionType}`);
+      }
+      const name = opt.name != null ? String(opt.name).trim() : '';
+      if (!name) {
+        throw new Error('Chaque option doit avoir un name non vide');
+      }
+      const priceMod =
+        opt.price_modifier !== undefined && opt.price_modifier !== null
+          ? Number(opt.price_modifier)
+          : 0;
+      if (Number.isNaN(priceMod)) {
+        throw new Error(`price_modifier invalide pour l'option "${name}"`);
+      }
+      await client.query(insertSql, [productId, optionType, name, priceMod]);
+    }
+  }
+
+  /**
+   * Créer un produit et ses options en une seule transaction.
+   * @param {object} productData - category_id, name, description, price, image_url, is_active, is_seasonal, is_trending
+   * @param {Array<{ option_type: string, name: string, price_modifier?: number }>} options
+   * @returns {Promise<object|null>} produit enrichi comme findById
+   */
+  async createWithOptions(productData, options = []) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const insertProduct = `
+        INSERT INTO products (category_id, name, description, price, image_url, is_active, is_seasonal, is_trending)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING *
+      `;
+      const values = [
+        productData.category_id || null,
+        productData.name,
+        productData.description || null,
+        productData.price,
+        productData.image_url || null,
+        productData.is_active !== undefined ? productData.is_active : true,
+        productData.is_seasonal || false,
+        productData.is_trending || false,
+      ];
+      const productResult = await client.query(insertProduct, values);
+      const product = productResult.rows[0];
+
+      if (Array.isArray(options) && options.length > 0) {
+        await this._insertProductOptions(product.id, options, client);
+      }
+
+      await client.query('COMMIT');
+      return this.findById(product.id);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 }
 

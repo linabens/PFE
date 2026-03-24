@@ -146,7 +146,7 @@ class StatsModel extends BaseModel {
     const query = `
       WITH loyalty_usage AS (
         SELECT 
-          COUNT(*) FILTER (WHERE loyalty_points_used > 0)::decimal / NULLIF(COUNT(*), 0) as usage_rate
+          COUNT(*) FILTER (WHERE loyalty_used = true)::decimal / NULLIF(COUNT(*), 0) as usage_rate
         FROM orders
         WHERE DATE(created_at) = $1
       )

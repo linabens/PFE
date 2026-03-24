@@ -30,14 +30,14 @@ class GameModel {
     const executor = client || pool;
     
     const query = `
-      INSERT INTO game_sessions (game_id, user_id, table_id, score, reward_points, played_at)
+      INSERT INTO game_sessions (game_id, session_id, table_id, score, reward_points, played_at)
       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
       RETURNING *
     `;
     
     const result = await executor.query(query, [
       sessionData.game_id,
-      sessionData.user_id || null,
+      sessionData.session_id || null,
       sessionData.table_id || null,
       sessionData.score || 0,
       sessionData.reward_points || 0,

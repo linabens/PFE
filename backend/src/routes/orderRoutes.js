@@ -3,6 +3,8 @@ const router = express.Router();
 const OrderModel = require('../models/OrderModel');
 const ProductModel = require('../models/ProductModel');
 const pool = require('../database/pool');
+const LoyaltyService = require('../services/LoyaltyService');
+const { toMillimes, fromMillimes } = require('../utils/money');
 const { authenticateSession, authenticateToken, optionalAuthenticateToken, authorizeRoles } = require('../middleware');
 
 /**
@@ -23,10 +25,6 @@ router.post('/', authenticateSession, async (req, res) => {
       return res.status(400).json({ success: false, error: 'table_id est requis' });
     }
     
-    if (!table_id) {
-      return res.status(400).json({ success: false, error: 'table_id est requis' });
-    }
-    
     if (!items || items.length === 0) {
       return res.status(400).json({ success: false, error: 'Au moins un produit est requis' });
     }
@@ -34,7 +32,7 @@ router.post('/', authenticateSession, async (req, res) => {
     await client.query('BEGIN');
     
     // Calculer le total de la commande
-    let totalPrice = 0;
+    let totalPriceMillimes = 0;
     const processedItems = [];
     
     for (const item of items) {
@@ -58,7 +56,7 @@ router.post('/', authenticateSession, async (req, res) => {
       }
       
       // Calculer le prix unitaire avec les options
-      let unitPrice = parseFloat(product.price);
+      let unitPriceMillimes = toMillimes(product.price);
       const selectedOptions = [];
       
       if (item.options && item.options.length > 0) {
@@ -68,7 +66,7 @@ router.post('/', authenticateSession, async (req, res) => {
           if (optionType) {
             const option = optionType.find(o => o.id === selectedOption.option_id);
             if (option) {
-              unitPrice += parseFloat(option.price_modifier);
+              unitPriceMillimes += toMillimes(option.price_modifier);
               selectedOptions.push({
                 option_name: option.name,
                 price_modifier: option.price_modifier,
@@ -79,14 +77,14 @@ router.post('/', authenticateSession, async (req, res) => {
       }
       
       const quantity = item.quantity || 1;
-      const subtotal = unitPrice * quantity;
-      totalPrice += subtotal;
+      const subtotalMillimes = unitPriceMillimes * quantity;
+      totalPriceMillimes += subtotalMillimes;
       
       processedItems.push({
         product_id: product.id,
         quantity,
-        unit_price: unitPrice,
-        subtotal,
+        unit_price: fromMillimes(unitPriceMillimes),
+        subtotal: fromMillimes(subtotalMillimes),
         options: selectedOptions,
       });
     }
@@ -98,7 +96,7 @@ router.post('/', authenticateSession, async (req, res) => {
         session_id: sessionId,
         user_id: user_id ? parseInt(user_id) : null,
         status: 'new',
-        total_price: totalPrice,
+        total_price: fromMillimes(totalPriceMillimes),
         loyalty_used: loyalty_used || false,
       },
       processedItems,
@@ -227,6 +225,11 @@ router.patch('/:id/status', authenticateToken, authorizeRoles('staff','admin'), 
         error: `Statut invalide. Statuts valides: ${validStatuses.join(', ')}` 
       });
     }
+
+    const existingOrder = await OrderModel.findById(orderId);
+    if (!existingOrder) {
+      return res.status(404).json({ success: false, error: 'Commande non trouvée' });
+    }
     
     await client.query('BEGIN');
     
@@ -238,8 +241,39 @@ router.patch('/:id/status', authenticateToken, authorizeRoles('staff','admin'), 
     );
     
     await client.query('COMMIT');
+
+    // Points fidélité automatiques à la clôture (1 pt / 50 TND) — uniquement à la première transition vers "completed"
+    let loyaltyEarned = null;
+    if (status === 'completed' && existingOrder.status !== 'completed') {
+      try {
+        if (existingOrder.session_id) {
+          const sess = await pool.query(
+            'SELECT loyalty_account_id FROM sessions WHERE id = $1',
+            [existingOrder.session_id]
+          );
+          const loyaltyId = sess.rows[0]?.loyalty_account_id;
+          if (loyaltyId) {
+            loyaltyEarned = await LoyaltyService.earnPoints(
+              loyaltyId,
+              orderId,
+              Number(existingOrder.total_price)
+            );
+          }
+        }
+      } catch (loyErr) {
+        console.error('Erreur attribution automatique des points fidélité:', loyalErr);
+      }
+    }
     
-    res.json({ success: true, data: updatedOrder, message: 'Statut mis à jour' });
+    res.json({
+      success: true,
+      data: loyaltyEarned
+        ? { ...updatedOrder, loyalty_earned: loyaltyEarned }
+        : updatedOrder,
+      message: loyaltyEarned?.points_added
+        ? `Statut mis à jour — ${loyaltyEarned.points_added} point(s) fidélité crédité(s).`
+        : 'Statut mis à jour',
+    });
     
   } catch (error) {
     await client.query('ROLLBACK');

@@ -146,17 +146,25 @@ router.post('/:id/score', authenticateSession, async (req, res, next) => {
     }
 
     const result = await GameService.submitScore({
-      gameId:    parseInt(req.params.id),
+      gameId: parseInt(req.params.id),
       sessionId: req.session?.id,
-      tableId:   req.session?.table_id,
-      score:     parseInt(score),
+      tableId: req.session?.table_id,
+      score: parseInt(score),
       metadata,
+      loyaltyAccountId: req.session?.loyalty_account_id || null,
     });
+
+    const msg =
+      result.loyalty_points_added > 0
+        ? `Partie enregistrée ! ${result.loyalty_points_added} point(s) ajouté(s) à votre compte fidélité (solde: ${result.loyalty_balance}). 🎉`
+        : result.reward_points > 0
+          ? `Partie enregistrée ! ${result.reward_points} point(s) de récompense enregistré(s). Liez votre compte fidélité pour les créditer sur votre portefeuille.`
+          : 'Partie enregistrée !';
 
     res.status(201).json({
       success: true,
       data: result,
-      message: `Partie enregistrée ! Vous gagnez ${result.reward_points} point(s) de fidélité. 🎉`,
+      message: msg,
     });
   } catch (err) { next(err); }
 });

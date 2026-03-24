@@ -93,7 +93,8 @@ CREATE TABLE IF NOT EXISTS products (
     category_id INT REFERENCES categories(id) ON DELETE SET NULL,
     name VARCHAR(150) NOT NULL,
     description TEXT,
-    price DECIMAL(10,2) NOT NULL,
+    -- TND: on garde 3 décimales (millimes)
+    price DECIMAL(10,3) NOT NULL,
     image_url VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     is_seasonal BOOLEAN DEFAULT FALSE,
@@ -110,7 +111,7 @@ CREATE TABLE IF NOT EXISTS product_options (
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
     option_type option_type_enum NOT NULL,
     name VARCHAR(100) NOT NULL,
-    price_modifier DECIMAL(10,2) DEFAULT 0
+    price_modifier DECIMAL(10,3) DEFAULT 0
 );
 
 -- =====================================================
@@ -123,7 +124,7 @@ CREATE TABLE IF NOT EXISTS orders (
     session_id INT REFERENCES sessions(id) ON DELETE SET NULL,
     user_id INT REFERENCES users(id) ON DELETE SET NULL,
     status order_status DEFAULT 'new',
-    total_price DECIMAL(10,2),
+    total_price DECIMAL(10,3),
     loyalty_used BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
@@ -138,8 +139,8 @@ CREATE TABLE IF NOT EXISTS order_items (
     order_id INT REFERENCES orders(id) ON DELETE CASCADE,
     product_id INT REFERENCES products(id) ON DELETE SET NULL,
     quantity INT NOT NULL,
-    unit_price DECIMAL(10,2) NOT NULL,
-    subtotal DECIMAL(10,2) NOT NULL
+    unit_price DECIMAL(10,3) NOT NULL,
+    subtotal DECIMAL(10,3) NOT NULL
 );
 
 -- =====================================================
@@ -150,7 +151,7 @@ CREATE TABLE IF NOT EXISTS order_item_options (
     id SERIAL PRIMARY KEY,
     order_item_id INT REFERENCES order_items(id) ON DELETE CASCADE,
     option_name VARCHAR(100),
-    price_modifier DECIMAL(10,2) DEFAULT 0
+    price_modifier DECIMAL(10,3) DEFAULT 0
 );
 
 -- =====================================================
@@ -164,6 +165,36 @@ CREATE TABLE IF NOT EXISTS order_status_history (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     changed_by INT REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- =====================================================
+-- MONEY PRECISION (TND millimes) — upgrade existing DBs
+-- =====================================================
+-- If the DB was created with DECIMAL(10,2), these ALTERs upgrade it to DECIMAL(10,3)
+-- to avoid losing precision (ex: 10.500 TND). Safe to run multiple times.
+
+ALTER TABLE IF EXISTS products
+  ALTER COLUMN price TYPE DECIMAL(10,3)
+  USING price::DECIMAL(10,3);
+
+ALTER TABLE IF EXISTS product_options
+  ALTER COLUMN price_modifier TYPE DECIMAL(10,3)
+  USING price_modifier::DECIMAL(10,3);
+
+ALTER TABLE IF EXISTS orders
+  ALTER COLUMN total_price TYPE DECIMAL(10,3)
+  USING total_price::DECIMAL(10,3);
+
+ALTER TABLE IF EXISTS order_items
+  ALTER COLUMN unit_price TYPE DECIMAL(10,3)
+  USING unit_price::DECIMAL(10,3);
+
+ALTER TABLE IF EXISTS order_items
+  ALTER COLUMN subtotal TYPE DECIMAL(10,3)
+  USING subtotal::DECIMAL(10,3);
+
+ALTER TABLE IF EXISTS order_item_options
+  ALTER COLUMN price_modifier TYPE DECIMAL(10,3)
+  USING price_modifier::DECIMAL(10,3);
 
 -- =====================================================
 -- LOYALTY ACCOUNTS (NAME-BASED, NO ACCOUNT REQUIRED)
@@ -191,8 +222,32 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
     order_id INT REFERENCES orders(id) ON DELETE SET NULL,
     points_added INT DEFAULT 0,
     points_used INT DEFAULT 0,
+    source_type VARCHAR(30),
+    source_id INT,
+    event_key VARCHAR(120),
+    note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE UNIQUE INDEX IF NOT EXISTS uq_loyalty_transactions_event_key
+  ON loyalty_transactions(event_key)
+  WHERE event_key IS NOT NULL;
+
+-- Journal des réponses pour recalcul anti-fraude du score côté serveur
+CREATE TABLE IF NOT EXISTS game_answer_logs (
+    id SERIAL PRIMARY KEY,
+    session_id INT REFERENCES sessions(id) ON DELETE CASCADE,
+    game_id INT REFERENCES games(id) ON DELETE CASCADE,
+    mode VARCHAR(20) NOT NULL CHECK (mode IN ('quiz', 'word_scramble')),
+    question_id INT,
+    word_id INT,
+    provided_answer VARCHAR(255),
+    is_correct BOOLEAN NOT NULL DEFAULT false,
+    points_awarded INT NOT NULL DEFAULT 0,
+    consumed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_game_answer_logs_session_game
+  ON game_answer_logs(session_id, game_id, consumed_at, created_at);
 
 -- =====================================================
 -- GAMES

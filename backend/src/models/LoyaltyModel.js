@@ -71,23 +71,18 @@ class LoyaltyModel {
   /**
    * Add points to loyalty account
    */
-  static async addPoints(loyaltyId, points) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `UPDATE loyalty_accounts 
-         SET points = points + $1, 
-             total_earned = total_earned + $1,
-             updated_at = NOW()
-         WHERE id = $2
-         RETURNING *`,
-        [points, loyaltyId]
-      );
-      
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
+  static async addPoints(loyaltyId, points, client = null) {
+    const executor = client || pool;
+    const result = await executor.query(
+      `UPDATE loyalty_accounts 
+       SET points = points + $1, 
+           total_earned = total_earned + $1,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [points, loyaltyId]
+    );
+    return result.rows[0];
   }
   
   /**
@@ -114,20 +109,25 @@ class LoyaltyModel {
   /**
    * Create loyalty transaction record
    */
-  static async createTransaction(loyaltyId, orderId, points_added = 0, points_used = 0) {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `INSERT INTO loyalty_transactions (loyalty_id, order_id, points_added, points_used)
-         VALUES ($1, $2, $3, $4)
-         RETURNING *`,
-        [loyaltyId, orderId, points_added, points_used]
-      );
-      
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
+  static async createTransaction(
+    loyaltyId,
+    orderId,
+    points_added = 0,
+    points_used = 0,
+    meta = {},
+    client = null
+  ) {
+    const executor = client || pool;
+    const { source_type = null, source_id = null, event_key = null, note = null } = meta;
+    const result = await executor.query(
+      `INSERT INTO loyalty_transactions
+        (loyalty_id, order_id, points_added, points_used, source_type, source_id, event_key, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (event_key) DO NOTHING
+       RETURNING *`,
+      [loyaltyId, orderId, points_added, points_used, source_type, source_id, event_key, note]
+    );
+    return result.rows[0] || null;
   }
 }
 
