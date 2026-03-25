@@ -40,15 +40,28 @@ class GameService {
   }
 
   // ── Check a single quiz answer ────────────────────────────────────────────────
-  async checkAnswer(questionId, answer) {
+  async checkAnswer(questionId, answer, { sessionId = null, gameId = null } = {}) {
     const result = await pool.query(
       'SELECT correct_answer, points FROM game_questions WHERE id = $1',
       [questionId]
     );
     const q = result.rows[0];
     if (!q) throw ApiError.notFound('Question introuvable.');
-    const isCorrect = q.correct_answer.toLowerCase() === answer.toLowerCase();
-    return { isCorrect, points: isCorrect ? q.points : 0 };
+
+    const isCorrect = q.correct_answer.toLowerCase() === String(answer).toLowerCase();
+    const awardedPoints = isCorrect ? q.points : 0;
+
+    // Anti-fraude: journaliser côté serveur pour recalculer le score réel plus tard.
+    if (sessionId && gameId) {
+      await pool.query(
+        `INSERT INTO game_answer_logs
+          (session_id, game_id, mode, question_id, provided_answer, is_correct, points_awarded)
+         VALUES ($1, $2, 'quiz', $3, $4, $5, $6)`,
+        [sessionId, gameId, questionId, String(answer), isCorrect, awardedPoints]
+      );
+    }
+
+    return { isCorrect, points: awardedPoints };
   }
 
   // ── Puzzle data ───────────────────────────────────────────────────────────────
@@ -88,15 +101,29 @@ class GameService {
   }
 
   // ── Check scramble answer ─────────────────────────────────────────────────────
-  async checkWordAnswer(wordId, answer) {
+  async checkWordAnswer(wordId, answer, { sessionId = null, gameId = null } = {}) {
     const result = await pool.query(
       'SELECT original_word, points FROM game_words WHERE id = $1',
       [wordId]
     );
     const w = result.rows[0];
     if (!w) throw ApiError.notFound('Mot introuvable.');
-    const isCorrect = w.original_word.toLowerCase() === answer.toLowerCase().trim();
-    return { isCorrect, points: isCorrect ? w.points : 0, correct: w.original_word };
+
+    const normalized = String(answer).toLowerCase().trim();
+    const isCorrect = w.original_word.toLowerCase() === normalized;
+    const awardedPoints = isCorrect ? w.points : 0;
+
+    // Anti-fraude: journaliser côté serveur pour recalculer le score réel plus tard.
+    if (sessionId && gameId) {
+      await pool.query(
+        `INSERT INTO game_answer_logs
+          (session_id, game_id, mode, word_id, provided_answer, is_correct, points_awarded)
+         VALUES ($1, $2, 'word_scramble', $3, $4, $5, $6)`,
+        [sessionId, gameId, wordId, String(answer), isCorrect, awardedPoints]
+      );
+    }
+
+    return { isCorrect, points: awardedPoints, correct: w.original_word };
   }
 
   // ── Submit final score ────────────────────────────────────────────────────────
@@ -106,13 +133,19 @@ class GameService {
       throw ApiError.badRequest('Score invalide — doit être un entier positif.');
     }
 
-    // Never trust the client: validate that the submitted score is plausible.
-    // Prefer an exact cap based on IDs sent in metadata; otherwise fall back to a conservative cap.
-    const maxAllowedScore = await this._getMaxAllowedScore(gameId, metadata);
-    if (score > maxAllowedScore) {
-      throw ApiError.badRequest(
-        `Score invalide — maximum autorisé pour cette partie: ${maxAllowedScore}.`
-      );
+    // Anti-fraude: score autoritaire = somme des réponses journalisées côté serveur (si disponibles).
+    // Sinon, fallback: validation plafonnée (compat puzzle / anciens clients).
+    const consumedServerScore = await this._consumeServerAnswerScore(sessionId, gameId);
+    let effectiveScore = score;
+    if (consumedServerScore !== null) {
+      effectiveScore = consumedServerScore;
+    } else {
+      const maxAllowedScore = await this._getMaxAllowedScore(gameId, metadata);
+      if (score > maxAllowedScore) {
+        throw ApiError.badRequest(
+          `Score invalide — maximum autorisé pour cette partie: ${maxAllowedScore}.`
+        );
+      }
     }
 
     // Anti-cheat: check play count for this session
@@ -129,24 +162,30 @@ class GameService {
     }
 
     // Calculate reward points (1 reward pt per 20 score pts)
-    const rewardPoints = Math.floor(score / 20);
+    const rewardPoints = Math.floor(effectiveScore / 20);
 
     const gameSession = await GameModel.createSession({
       game_id: gameId,
       session_id: sessionId || null,
       table_id: tableId || null,
-      score,
+      score: effectiveScore,
       reward_points: rewardPoints,
     });
 
     // Créditer le compte fidélité si la session est liée (POST /api/sessions/loyalty)
     let loyaltyResult = null;
     if (rewardPoints > 0 && loyaltyAccountId) {
-      loyaltyResult = await LoyaltyService.earnGameRewardPoints(loyaltyAccountId, rewardPoints);
+      loyaltyResult = await LoyaltyService.earnGameRewardPointsForSession(
+        loyaltyAccountId,
+        gameSession.id,
+        rewardPoints
+      );
     }
 
     return {
       ...gameSession,
+      submitted_score: score,
+      validated_score: effectiveScore,
       reward_points: rewardPoints,
       loyalty_points_added: loyaltyResult?.points_added ?? 0,
       loyalty_balance: loyaltyResult?.account?.points ?? null,
@@ -169,6 +208,31 @@ class GameService {
   }
 
   // ── Internal helpers ──────────────────────────────────────────────────────────
+  async _consumeServerAnswerScore(sessionId, gameId) {
+    if (!sessionId || !gameId) return null;
+    const result = await pool.query(
+      `WITH to_consume AS (
+         SELECT id, points_awarded
+         FROM game_answer_logs
+         WHERE session_id = $1
+           AND game_id = $2
+           AND consumed_at IS NULL
+       ),
+       updated AS (
+         UPDATE game_answer_logs gal
+         SET consumed_at = CURRENT_TIMESTAMP
+         WHERE gal.id IN (SELECT id FROM to_consume)
+         RETURNING gal.id
+       )
+       SELECT COALESCE((SELECT SUM(points_awarded) FROM to_consume), 0)::int AS score,
+              (SELECT COUNT(*) FROM updated)::int AS consumed_count`,
+      [sessionId, gameId]
+    );
+    const consumedCount = parseInt(result.rows?.[0]?.consumed_count, 10) || 0;
+    if (consumedCount <= 0) return null;
+    return parseInt(result.rows?.[0]?.score, 10) || 0;
+  }
+
   async _getMaxAllowedScore(gameId, metadata = {}) {
     const DEFAULTS = {
       QUIZ_LIMIT: 10,
@@ -269,13 +333,11 @@ class GameService {
   }
 
   _scrambleWord(word) {
-    // Stop recursion: for some inputs (ex: "AAA") it's impossible to scramble to a different string.
     if (typeof word !== 'string') return '';
     const original = word;
     const arrOriginal = original.split('');
     if (arrOriginal.length <= 1) return original;
 
-    // If all characters are identical, every permutation equals the original.
     const allSame = arrOriginal.every((ch) => ch === arrOriginal[0]);
     if (allSame) return original;
 
@@ -295,7 +357,6 @@ class GameService {
       if (scrambled !== original) return scrambled;
     }
 
-    // Fallback: force a difference by swapping the first char with another different one.
     const arr = arrOriginal.slice();
     const first = arr[0];
     const swapIndex = arr.findIndex((ch) => ch !== first && ch !== undefined);
@@ -305,7 +366,6 @@ class GameService {
       if (forced !== original) return forced;
     }
 
-    // As a last resort, return original (should only happen in edge-cases).
     return original;
   }
 }

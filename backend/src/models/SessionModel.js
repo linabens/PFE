@@ -1,5 +1,6 @@
 const pool = require('../database/pool');
 const crypto = require('crypto');
+const config = require('../config');
 
 class SessionModel {
   /**
@@ -7,12 +8,13 @@ class SessionModel {
    */
   async create(tableId = null) {
     const token = crypto.randomBytes(24).toString('hex');
+    const maxAgeMin = config.sessionMaxAgeMinutes || 120;
     const query = `
-      INSERT INTO sessions (table_id, token)
-      VALUES ($1, $2)
+      INSERT INTO sessions (table_id, token, expires_at, last_active_at, is_closed)
+      VALUES ($1, $2, NOW() + ($3 * INTERVAL '1 minute'), NOW(), false)
       RETURNING *
     `;
-    const result = await pool.query(query, [tableId, token]);
+    const result = await pool.query(query, [tableId, token, maxAgeMin]);
     return result.rows[0];
   }
 
@@ -23,6 +25,59 @@ class SessionModel {
     const query = `SELECT * FROM sessions WHERE token = $1`;
     const result = await pool.query(query, [token]);
     return result.rows[0] || null;
+  }
+
+  /**
+   * Contrôle métier : session utilisable pour commander / jouer ?
+   */
+  validateSessionRow(session) {
+    if (!session) {
+      return { ok: false, code: 'NOT_FOUND' };
+    }
+    if (session.is_closed === true) {
+      return { ok: false, code: 'CLOSED' };
+    }
+    if (session.expires_at) {
+      const exp = new Date(session.expires_at).getTime();
+      if (Date.now() > exp) {
+        return { ok: false, code: 'EXPIRED' };
+      }
+    }
+    const idleMs = (config.sessionIdleTimeoutMinutes || 45) * 60 * 1000;
+    if (session.last_active_at) {
+      const last = new Date(session.last_active_at).getTime();
+      if (Date.now() - last > idleMs) {
+        return { ok: false, code: 'IDLE' };
+      }
+    }
+    return { ok: true };
+  }
+
+  /**
+   * Fermeture volontaire (client quitte le café)
+   */
+  async closeByToken(token) {
+    const result = await pool.query(
+      `UPDATE sessions
+       SET is_closed = true, closed_at = NOW()
+       WHERE token = $1 AND is_closed = false
+       RETURNING *`,
+      [token]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Staff : invalider toutes les sessions encore ouvertes pour une table
+   */
+  async closeAllOpenForTable(tableId) {
+    const result = await pool.query(
+      `UPDATE sessions
+       SET is_closed = true, closed_at = NOW()
+       WHERE table_id = $1 AND is_closed = false`,
+      [tableId]
+    );
+    return result.rowCount || 0;
   }
 
   /**
@@ -51,6 +106,8 @@ class SessionModel {
       UPDATE sessions
       SET last_active_at = CURRENT_TIMESTAMP
       WHERE token = $1
+        AND COALESCE(is_closed, false) = false
+        AND (expires_at IS NULL OR expires_at > NOW())
       RETURNING *
     `;
     const result = await pool.query(query, [token]);

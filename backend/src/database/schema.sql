@@ -70,8 +70,19 @@ CREATE TABLE IF NOT EXISTS sessions (
     customer_id_number VARCHAR(50),
     loyalty_account_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_active_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    is_closed BOOLEAN DEFAULT FALSE,
+    closed_at TIMESTAMP
 );
+
+-- Mise à niveau sessions existantes (expiration + fermeture)
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_closed BOOLEAN DEFAULT FALSE;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS closed_at TIMESTAMP;
+UPDATE sessions
+SET expires_at = created_at + INTERVAL '2 hours'
+WHERE expires_at IS NULL;
 
 -- =====================================================
 -- CATEGORIES
@@ -228,6 +239,7 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
     note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_loyalty_transactions_event_key
   ON loyalty_transactions(event_key)
   WHERE event_key IS NOT NULL;

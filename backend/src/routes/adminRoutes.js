@@ -16,6 +16,7 @@ router.get('/orders/active',    AdminController.activeOrders);
 
 // ── Tables ────────────────────────────────────────────────────────────────────
 router.get('/tables',           AdminController.tables);
+router.post('/tables/:tableId/sessions/close-all', AdminController.closeTableSessions);
 
 // ── Revenue & Stats ─────────────────────────────────────────────────────────
 router.get('/revenue/summary',  AdminController.revenueSummary);

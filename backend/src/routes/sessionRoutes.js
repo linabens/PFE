@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const SessionModel = require('../models/SessionModel');
 const LoyaltyModel = require('../models/LoyaltyModel');
+const config = require('../config');
+const { verifyQrScanSignature } = require('../utils/qrSession');
 
 /**
  * POST /api/sessions
@@ -24,6 +26,7 @@ router.post('/', async (req, res, next) => {
         id: session.id,
         token: session.token,
         table_id: session.table_id,
+        expires_at: session.expires_at,
         message: 'Session créée avec succès. Bienvenue!'
       }
     });
@@ -40,6 +43,17 @@ router.post('/', async (req, res, next) => {
 router.get('/scan/:qr_code', async (req, res, next) => {
   try {
     const { qr_code } = req.params;
+    const { ts, sig } = req.query;
+    const requireSig = config.qrSessionRequireSignature === true;
+
+    if (requireSig || ts || sig) {
+      if (!verifyQrScanSignature(qr_code, ts, sig)) {
+        return res.status(403).json({
+          success: false,
+          error: 'QR code invalide ou expiré — rescannez le code à la table.',
+        });
+      }
+    }
 
     // Find the table by its QR code
     const TableModel = require('../models/TableModel');
@@ -69,8 +83,38 @@ router.get('/scan/:qr_code', async (req, res, next) => {
         token: session.token,
         table_id: table.id,
         table_number: table.table_number,
+        expires_at: session.expires_at,
         message: `Bienvenue à la table ${table.table_number} ! Votre session est prête.`
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/sessions/leave
+ * Le client termine sa session (quitte le café) — le token ne pourra plus commander.
+ * Header: x-session-token (ou body / query)
+ * Ne passe pas par authenticateSession : on peut fermer même une session déjà expirée.
+ */
+router.post('/leave', async (req, res, next) => {
+  try {
+    const token =
+      req.headers['x-session-token'] || req.query.session_token || req.body.session_token;
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'session_token est requis' });
+    }
+    const closed = await SessionModel.closeByToken(token);
+    if (!closed) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session déjà fermée ou token invalide.',
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Session terminée. À bientôt !',
     });
   } catch (error) {
     next(error);
@@ -90,6 +134,18 @@ router.post('/loyalty', async (req, res, next) => {
       return res.status(400).json({ 
         success: false, 
         error: 'session_token is required' 
+      });
+    }
+
+    const existing = await SessionModel.findByToken(session_token);
+    if (!existing) {
+      return res.status(401).json({ success: false, error: 'Session invalide.' });
+    }
+    const v = SessionModel.validateSessionRow(existing);
+    if (!v.ok) {
+      return res.status(401).json({
+        success: false,
+        error: 'Session expirée ou fermée. Rescannez le QR code.',
       });
     }
     

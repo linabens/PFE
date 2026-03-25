@@ -74,7 +74,10 @@ router.post('/:id/answer', authenticateSession, async (req, res, next) => {
     if (!questionId || !answer) {
       return res.status(400).json({ success: false, error: 'questionId et answer sont requis' });
     }
-    const result = await GameService.checkAnswer(parseInt(questionId), answer);
+    const result = await GameService.checkAnswer(parseInt(questionId), answer, {
+      sessionId: req.session?.id,
+      gameId: parseInt(req.params.id),
+    });
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
 });
@@ -124,7 +127,10 @@ router.post('/:id/words/:wordId/check', authenticateSession, async (req, res, ne
     if (!answer) {
       return res.status(400).json({ success: false, error: 'answer est requis' });
     }
-    const result = await GameService.checkWordAnswer(parseInt(req.params.wordId), answer);
+    const result = await GameService.checkWordAnswer(parseInt(req.params.wordId), answer, {
+      sessionId: req.session?.id,
+      gameId: parseInt(req.params.id),
+    });
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
 });

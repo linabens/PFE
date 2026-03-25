@@ -214,6 +214,31 @@ class AdminController {
       res.json({ success: true, data: { period, ...result.rows[0] } });
     } catch (err) { next(err); }
   }
+
+  /**
+   * POST /api/admin/tables/:tableId/sessions/close-all
+   * Invalide toutes les sessions encore ouvertes pour cette table (staff).
+   */
+  async closeTableSessions(req, res, next) {
+    try {
+      const tableId = parseInt(req.params.tableId, 10);
+      if (!Number.isInteger(tableId)) {
+        return res.status(400).json({ success: false, error: 'tableId invalide' });
+      }
+      const SessionModel = require('../models/SessionModel');
+      const closedCount = await SessionModel.closeAllOpenForTable(tableId);
+      res.json({
+        success: true,
+        data: { closed_count: closedCount },
+        message:
+          closedCount > 0
+            ? `${closedCount} session(s) fermée(s) pour cette table.`
+            : 'Aucune session ouverte à fermer.',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new AdminController();

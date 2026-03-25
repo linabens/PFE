@@ -5,14 +5,20 @@ const ProductModel = require('../models/ProductModel');
 const pool = require('../database/pool');
 const LoyaltyService = require('../services/LoyaltyService');
 const { toMillimes, fromMillimes } = require('../utils/money');
-const { authenticateSession, authenticateToken, optionalAuthenticateToken, authorizeRoles } = require('../middleware');
+const {
+  authenticateSession,
+  authenticateToken,
+  optionalAuthenticateToken,
+  authorizeRoles,
+  orderCreateRateLimiter,
+} = require('../middleware');
 
 /**
  * POST /api/orders
  * Créer une nouvelle commande
  * Body: { table_id, user_id (optionnel), items: [{ product_id, quantity, options: [...] }] }
  */
-router.post('/', authenticateSession, async (req, res) => {
+router.post('/', authenticateSession, orderCreateRateLimiter, async (req, res) => {
   const client = await pool.connect();
   
   try {
