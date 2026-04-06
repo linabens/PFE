@@ -46,7 +46,7 @@ async function seed() {
     // SEED CATEGORIES
     // =====================================================
     console.log('📁 Création des catégories...');
-    await client.query(`
+    const catResult = await client.query(`
       INSERT INTO categories (name, type, display_order)
       VALUES 
         ('Café Chaud', 'drink', 1),
@@ -55,35 +55,42 @@ async function seed() {
         ('Thé', 'drink', 4),
         ('Gâteaux', 'dessert', 5),
         ('Pâtisseries', 'dessert', 6)
-      ON CONFLICT DO NOTHING
+      ON CONFLICT (name) DO UPDATE SET type = EXCLUDED.type
+      RETURNING id, name
     `);
     
+    const categoryMap = {};
+    catResult.rows.forEach(row => {
+      categoryMap[row.name] = row.id;
+    });
+
     // =====================================================
     // SEED PRODUCTS
     // =====================================================
     console.log('☕ Création des produits...');
-    await client.query(`
-      INSERT INTO products (category_id, name, description, price, is_active, is_trending)
-      VALUES 
-        -- Café Chaud (category_id = 1)
-        (1, 'Espresso', 'Café serré et corsé', 3.50, true, false),
-        (1, 'Cappuccino', 'Espresso avec mousse de lait', 4.50, true, true),
-        (1, 'Latte', 'Espresso avec lait mousseux', 4.75, true, true),
-        (1, 'Americano', 'Espresso allongé avec eau chaude', 4.00, true, false),
-        
-        -- Café Glacé (category_id = 2)
-        (2, 'Café Glacé', 'Café froid sur glace', 4.25, true, true),
-        (2, 'Cold Brew', 'Café infusé à froid', 5.25, true, false),
-        
-        -- Gâteaux (category_id = 5)
-        (5, 'Cheesecake', 'Gâteau au fromage crémeux', 7.50, true, true),
-        (5, 'Tiramisu', 'Dessert italien au café', 7.50, true, false),
-        
-        -- Pâtisseries (category_id = 6)
-        (6, 'Croissant', 'Viennoiserie française', 4.00, true, true),
-        (6, 'Pain au Chocolat', 'Croissant au chocolat', 4.50, true, false)
-      ON CONFLICT DO NOTHING
-    `);
+    const products = [
+      { cat: 'Café Chaud', name: 'Espresso', desc: 'Café serré et corsé', price: 3.50, trending: false },
+      { cat: 'Café Chaud', name: 'Cappuccino', desc: 'Espresso avec mousse de lait', price: 4.50, trending: true },
+      { cat: 'Café Chaud', name: 'Latte', desc: 'Espresso avec lait mousseux', price: 4.75, trending: true },
+      { cat: 'Café Chaud', name: 'Americano', desc: 'Espresso allongé avec eau chaude', price: 4.00, trending: false },
+      { cat: 'Café Glacé', name: 'Café Glacé', desc: 'Café froid sur glace', price: 4.25, trending: true },
+      { cat: 'Café Glacé', name: 'Cold Brew', desc: 'Café infusé à froid', price: 5.25, trending: false },
+      { cat: 'Gâteaux', name: 'Cheesecake', desc: 'Gâteau au fromage crémeux', price: 7.50, trending: true },
+      { cat: 'Gâteaux', name: 'Tiramisu', desc: 'Dessert italien au café', price: 7.50, trending: false },
+      { cat: 'Pâtisseries', name: 'Croissant', desc: 'Viennoiserie française', price: 4.00, trending: true },
+      { cat: 'Pâtisseries', name: 'Pain au Chocolat', desc: 'Croissant au chocolat', price: 4.50, trending: false },
+    ];
+
+    for (const p of products) {
+      const catId = categoryMap[p.cat];
+      if (catId) {
+        await client.query(`
+          INSERT INTO products (category_id, name, description, price, is_active, is_trending)
+          VALUES ($1, $2, $3, $4, true, $5)
+          ON CONFLICT (name) DO NOTHING
+        `, [catId, p.name, p.desc, p.price, p.trending]);
+      }
+    }
     
     // =====================================================
     // SEED LOYALTY ACCOUNTS (name-based)

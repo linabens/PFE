@@ -239,6 +239,19 @@ class AdminController {
       next(err);
     }
   }
+
+  /**
+   * GET /api/admin/users
+   * Liste tous les utilisateurs (pour gestion staff)
+   */
+  async listUsers(req, res, next) {
+    try {
+      const result = await pool.query('SELECT id, full_name, email, role, created_at FROM users ORDER BY role, full_name');
+      res.json({ success: true, data: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new AdminController();

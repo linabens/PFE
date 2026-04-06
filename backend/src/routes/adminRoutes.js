@@ -27,6 +27,9 @@ router.get('/daily-stats',      AdminController.dailyStats);
 // ── Loyalty (admin view) ──────────────────────────────────────────────────────
 router.get('/loyalty',          LoyaltyController.listAll);
 
+// ── User Management (admin focus) ─────────────────────────────────────────────
+router.get('/users',            AdminController.listUsers);
+
 // ── News Management (admin only) ──────────────────────────────────────────────
 router.post('/news/refresh',    NewsController.refreshCache);
 

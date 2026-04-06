@@ -39,6 +39,27 @@ class AuthService {
     const saltRounds = 10;
     return bcrypt.hash(password, saltRounds);
   }
+
+  /**
+   * Register a new user
+   */
+  async register(data) {
+    const { full_name, email, password, role } = data;
+    const existing = await UserModel.findByEmail(email);
+    if (existing) {
+      throw ApiError.badRequest('Email already in use');
+    }
+    const password_hash = await this.hashPassword(password);
+    const user = await UserModel.create({
+      full_name,
+      email,
+      password_hash,
+      role: role || 'staff'
+    });
+    // Remove hash from returned object
+    delete user.password_hash;
+    return user;
+  }
 }
 
 module.exports = new AuthService();

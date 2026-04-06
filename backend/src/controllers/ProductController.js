@@ -9,8 +9,8 @@ class ProductController {
       const { category_id, is_trending, is_seasonal, limit, offset } = req.query;
       const products = await ProductModel.findAll({
         categoryId: category_id ? parseInt(category_id) : undefined,
-        isTrending: is_trending === 'true',
-        isSeasonal: is_seasonal === 'true',
+        isTrending: is_trending !== undefined ? is_trending === 'true' : undefined,
+        isSeasonal: is_seasonal !== undefined ? is_seasonal === 'true' : undefined,
         limit: limit ? parseInt(limit) : undefined,
         offset: offset ? parseInt(offset) : undefined,
       });

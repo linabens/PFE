@@ -90,7 +90,7 @@ WHERE expires_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) UNIQUE NOT NULL,
     type category_type NOT NULL,
     display_order INT
 );
@@ -244,6 +244,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_loyalty_transactions_event_key
   ON loyalty_transactions(event_key)
   WHERE event_key IS NOT NULL;
 
+-- =====================================================
+-- GAMES
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS games (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
 -- Journal des réponses pour recalcul anti-fraude du score côté serveur
 CREATE TABLE IF NOT EXISTS game_answer_logs (
     id SERIAL PRIMARY KEY,
@@ -262,17 +272,7 @@ CREATE INDEX IF NOT EXISTS idx_game_answer_logs_session_game
   ON game_answer_logs(session_id, game_id, consumed_at, created_at);
 
 -- =====================================================
--- GAMES
--- =====================================================
-
-CREATE TABLE IF NOT EXISTS games (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE
-);
-
--- =====================================================
--- GAME SESSIONS
+-- GAME SESSIONS (Moved after GAMES)
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS game_sessions (
@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
     reward_points INT DEFAULT 0,
     played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- =====================================================
 -- ASSISTANCE REQUESTS (CALL WAITER)

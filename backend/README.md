@@ -1,4 +1,4 @@
-# Coffee Time Backend API
+ Coffee Time Backend API
 
 Comprehensive backend for a full-stack multiservice coffee shop application with Node.js, Express, and PostgreSQL.
 
