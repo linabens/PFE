@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+
+@layer base {
+  :root {
+    /* Luxury Coffee Palette (Precisely Mapped) */
+    --espresso: 19 96% 7%;        /* #220C02 - Deepest Espresso */
+    --deep-roast: 16 22% 19%;     /* #392A25 - Sidebar/Nav */
+    --muted-brown: 16 14% 36%;    /* #6A5750 - Secondary Accents */
+    --caramel: 18 35% 40%;        /* #8B5742 - Primary Accent/Buttons */
+    --latte: 31 49% 78%;          /* #E3C9AD - Main Background */
+    --cream: 18 16% 86%;          /* #E3D8D3 - Secondary/Card Background */
+
+    --background: var(--latte);
+    --foreground: var(--espresso);
+
+    --card: var(--cream);
+    --card-foreground: var(--espresso);
+
+    --popover: 18 16% 90%;
+    --popover-foreground: var(--espresso);
+
+    --primary: var(--caramel);
+    --primary-foreground: 18 16% 98%;
+
+    --secondary: var(--muted-brown);
+    --secondary-foreground: 18 16% 98%;
+
+    --muted: 18 16% 80%;
+    --muted-foreground: 16 14% 30%;
+
+    --accent: var(--caramel);
+    --accent-foreground: 18 16% 98%;
+
+    --destructive: 0 70% 35%;
+    --destructive-foreground: 18 16% 98%;
+
+    --success: 142 40% 30%;
+    --success-foreground: 18 16% 98%;
+
+    --warning: 35 70% 40%;
+    --warning-foreground: 18 16% 98%;
+
+    --info: 210 50% 40%;
+    --info-foreground: 18 16% 98%;
+
+    --border: var(--espresso) / 0.1;
+    --input: var(--latte);
+    --ring: var(--caramel);
+
+    --radius: 1rem; /* Slightly more rounded for elegance */
+
+    --sidebar-background: var(--deep-roast);
+    --sidebar-foreground: var(--cream);
+    --sidebar-primary: var(--caramel);
+    --sidebar-primary-foreground: 18 16% 98%;
+    --sidebar-accent: 19 96% 12%; 
+    --sidebar-accent-foreground: var(--cream);
+    --sidebar-border: var(--cream) / 0.08;
+    --sidebar-ring: var(--caramel);
+
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --glow-gold: 0 0 40px hsla(18, 35%, 40%, 0.1);
+    --glow-gold-strong: 0 0 0 1px hsla(18, 35%, 40%, 0.2), 0 0 20px hsla(18, 35%, 40%, 0.08);
+    --soft-shadow: 0 4px 20px -2px rgba(34, 12, 2, 0.08);
+  }
+
+  .dark {
+    --background: var(--espresso);
+    --foreground: var(--latte);
+
+    --card: var(--deep-roast);
+    --card-foreground: var(--latte);
+
+    --popover: 19 96% 12%;
+    --popover-foreground: var(--latte);
+
+    --secondary: var(--muted-brown);
+    --secondary-foreground: var(--cream);
+
+    --muted: 19 96% 15%;
+    --muted-foreground: 31 49% 60%;
+
+    --border: var(--cream) / 0.1;
+    --input: var(--espresso);
+    
+    --sidebar-background: 19 96% 4%;
+    --sidebar-foreground: var(--cream);
+    --sidebar-border: var(--cream) / 0.05;
+
+    --glow-gold: 0 0 40px hsla(18, 35%, 40%, 0.05);
+    --soft-shadow: 0 4px 30px -4px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(38 88% 41% / 0.3);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(38 88% 41% / 0.5);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(12px);
+    background: hsla(18, 16%, 86%, 0.4); /* Cream-based glass */
+    border: 1px solid hsla(18, 35%, 40%, 0.1);
+    box-shadow: var(--soft-shadow);
+  }
+
+  .glow-gold {
+    box-shadow: var(--glow-gold);
+  }
+
+  .glow-gold-strong {
+    box-shadow: var(--glow-gold-strong);
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  .animate-pulse-dot {
+    animation: pulse-dot 2s cubic-bezier(0.4,0,0.6,1) infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, hsl(31 49% 75%) 25%, hsl(31 49% 82%) 50%, hsl(31 49% 75%) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes count-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.015; /* Even more subtle grain */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+}
