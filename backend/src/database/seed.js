@@ -69,6 +69,7 @@ async function seed() {
     // =====================================================
     console.log('☕ Création des produits...');
     const products = [
+<<<<<<< HEAD
       { cat: 'Café Chaud', name: 'Espresso', desc: 'Café serré et corsé', price: 3.50, trending: false, image_url: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?q=80&w=400&h=400&auto=format&fit=crop' },
       { cat: 'Café Chaud', name: 'Cappuccino', desc: 'Espresso avec mousse de lait', price: 4.50, trending: true, image_url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=400&h=400&auto=format&fit=crop' },
       { cat: 'Café Chaud', name: 'Latte', desc: 'Espresso avec lait mousseux', price: 4.75, trending: true, image_url: 'https://images.unsplash.com/photo-1541167760496-162955ed8a9f?q=80&w=400&h=400&auto=format&fit=crop' },
@@ -79,15 +80,34 @@ async function seed() {
       { cat: 'Gâteaux', name: 'Tiramisu', desc: 'Dessert italien au café', price: 7.50, trending: false, image_url: 'https://images.unsplash.com/photo-1571115177098-24c42de1bd0f?q=80&w=400&h=400&auto=format&fit=crop' },
       { cat: 'Pâtisseries', name: 'Croissant', desc: 'Viennoiserie française', price: 4.00, trending: true, image_url: 'https://images.unsplash.com/photo-1555507036-ab1f40ce88f7?q=80&w=400&h=400&auto=format&fit=crop' },
       { cat: 'Pâtisseries', name: 'Pain au Chocolat', desc: 'Croissant au chocolat', price: 4.50, trending: false, image_url: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=400&h=400&auto=format&fit=crop' }
+=======
+      { cat: 'Café Chaud', name: 'Espresso', desc: 'Café serré et corsé', price: 3.50, trending: false },
+      { cat: 'Café Chaud', name: 'Cappuccino', desc: 'Espresso avec mousse de lait', price: 4.50, trending: true },
+      { cat: 'Café Chaud', name: 'Latte', desc: 'Espresso avec lait mousseux', price: 4.75, trending: true },
+      { cat: 'Café Chaud', name: 'Americano', desc: 'Espresso allongé avec eau chaude', price: 4.00, trending: false },
+      { cat: 'Café Glacé', name: 'Café Glacé', desc: 'Café froid sur glace', price: 4.25, trending: true },
+      { cat: 'Café Glacé', name: 'Cold Brew', desc: 'Café infusé à froid', price: 5.25, trending: false },
+      { cat: 'Gâteaux', name: 'Cheesecake', desc: 'Gâteau au fromage crémeux', price: 7.50, trending: true },
+      { cat: 'Gâteaux', name: 'Tiramisu', desc: 'Dessert italien au café', price: 7.50, trending: false },
+      { cat: 'Pâtisseries', name: 'Croissant', desc: 'Viennoiserie française', price: 4.00, trending: true },
+      { cat: 'Pâtisseries', name: 'Pain au Chocolat', desc: 'Croissant au chocolat', price: 4.50, trending: false },
+>>>>>>> fead0af5e7ba07ee7750ed7449b4dd9992747298
     ];
 
     for (const p of products) {
       const catId = categoryMap[p.cat];
       if (catId) {
         await client.query(`
+<<<<<<< HEAD
           INSERT INTO products (category_id, name, description, price, image_url, is_active, is_trending)
           VALUES ($1, $2, $3, $4, $5, true, $6)
         `, [catId, p.name, p.desc, p.price, p.image_url, p.trending]);
+=======
+          INSERT INTO products (category_id, name, description, price, is_active, is_trending)
+          VALUES ($1, $2, $3, $4, true, $5)
+          ON CONFLICT (name) DO NOTHING
+        `, [catId, p.name, p.desc, p.price, p.trending]);
+>>>>>>> fead0af5e7ba07ee7750ed7449b4dd9992747298
       }
     }
     
