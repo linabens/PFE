@@ -2,13 +2,13 @@ const pool = require('./pool');
 const bcrypt = require('bcrypt');
 
 /**
- * Seed la base de données avec des données de test
+ * Seed la base de données avec des données de test professionnelles
  */
 async function seed() {
   const client = await pool.connect();
   
   try {
-    console.log('🌱 Démarrage du seed...');
+    console.log('🌱 Démarrage du seed gourmet...');
     
     await client.query('BEGIN');
     
@@ -45,87 +45,99 @@ async function seed() {
     // =====================================================
     // SEED CATEGORIES
     // =====================================================
-    console.log('📁 Création des catégories...');
-    const catResult = await client.query(`
-      INSERT INTO categories (name, type, display_order)
-      VALUES 
-        ('Café Chaud', 'drink', 1),
-        ('Café Glacé', 'drink', 2),
-        ('Boissons Spéciales', 'drink', 3),
-        ('Thé', 'drink', 4),
-        ('Gâteaux', 'dessert', 5),
-        ('Pâtisseries', 'dessert', 6)
-      ON CONFLICT (name) DO UPDATE SET type = EXCLUDED.type
-      RETURNING id, name
-    `);
-    
+    console.log('📁 Création des catégories raffinées...');
+    const categories = [
+      { name: 'Signature Brews', type: 'drink', order: 1 },
+      { name: 'Iced Refreshers', type: 'drink', order: 2 },
+      { name: 'Artisan Tea', type: 'drink', order: 3 },
+      { name: 'Morning Pastries', type: 'dessert', order: 4 },
+      { name: 'Gourmette Cakes', type: 'dessert', order: 5 },
+      { name: 'Savoury Bites', type: 'dessert', order: 6 },
+    ];
+
     const categoryMap = {};
-    catResult.rows.forEach(row => {
-      categoryMap[row.name] = row.id;
-    });
+    for (const cat of categories) {
+      const res = await client.query(`
+        INSERT INTO categories (name, type, display_order)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (name) DO UPDATE SET type = EXCLUDED.type, display_order = EXCLUDED.display_order
+        RETURNING id, name
+      `, [cat.name, cat.type, cat.order]);
+      categoryMap[cat.name] = res.rows[0].id;
+    }
 
     // =====================================================
     // SEED PRODUCTS
     // =====================================================
-    console.log('☕ Création des produits...');
+    console.log('☕ Création du catalogue gourmet (30+ produits)...');
+    
     const products = [
-<<<<<<< HEAD
-      { cat: 'Café Chaud', name: 'Espresso', desc: 'Café serré et corsé', price: 3.50, trending: false, image_url: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Café Chaud', name: 'Cappuccino', desc: 'Espresso avec mousse de lait', price: 4.50, trending: true, image_url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Café Chaud', name: 'Latte', desc: 'Espresso avec lait mousseux', price: 4.75, trending: true, image_url: 'https://images.unsplash.com/photo-1541167760496-162955ed8a9f?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Café Chaud', name: 'Americano', desc: 'Espresso allongé avec eau', price: 4.00, trending: false, image_url: 'https://images.unsplash.com/photo-1551030173-122aabc4489c?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Café Glacé', name: 'Nitro Cold Brew', desc: 'Café froid sur pression', price: 4.25, trending: true, image_url: 'https://images.unsplash.com/photo-1517701550927-30cf4b1bf18a?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Café Glacé', name: 'Iced Latte', desc: 'Café glacé avec lait', price: 5.25, trending: false, image_url: 'https://images.unsplash.com/photo-1461023058943-07cb126dfb8a?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Gâteaux', name: 'Cheesecake', desc: 'Gâteau crémeux', price: 7.50, trending: true, image_url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Gâteaux', name: 'Tiramisu', desc: 'Dessert italien au café', price: 7.50, trending: false, image_url: 'https://images.unsplash.com/photo-1571115177098-24c42de1bd0f?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Pâtisseries', name: 'Croissant', desc: 'Viennoiserie française', price: 4.00, trending: true, image_url: 'https://images.unsplash.com/photo-1555507036-ab1f40ce88f7?q=80&w=400&h=400&auto=format&fit=crop' },
-      { cat: 'Pâtisseries', name: 'Pain au Chocolat', desc: 'Croissant au chocolat', price: 4.50, trending: false, image_url: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=400&h=400&auto=format&fit=crop' }
-=======
-      { cat: 'Café Chaud', name: 'Espresso', desc: 'Café serré et corsé', price: 3.50, trending: false },
-      { cat: 'Café Chaud', name: 'Cappuccino', desc: 'Espresso avec mousse de lait', price: 4.50, trending: true },
-      { cat: 'Café Chaud', name: 'Latte', desc: 'Espresso avec lait mousseux', price: 4.75, trending: true },
-      { cat: 'Café Chaud', name: 'Americano', desc: 'Espresso allongé avec eau chaude', price: 4.00, trending: false },
-      { cat: 'Café Glacé', name: 'Café Glacé', desc: 'Café froid sur glace', price: 4.25, trending: true },
-      { cat: 'Café Glacé', name: 'Cold Brew', desc: 'Café infusé à froid', price: 5.25, trending: false },
-      { cat: 'Gâteaux', name: 'Cheesecake', desc: 'Gâteau au fromage crémeux', price: 7.50, trending: true },
-      { cat: 'Gâteaux', name: 'Tiramisu', desc: 'Dessert italien au café', price: 7.50, trending: false },
-      { cat: 'Pâtisseries', name: 'Croissant', desc: 'Viennoiserie française', price: 4.00, trending: true },
-      { cat: 'Pâtisseries', name: 'Pain au Chocolat', desc: 'Croissant au chocolat', price: 4.50, trending: false },
->>>>>>> fead0af5e7ba07ee7750ed7449b4dd9992747298
+      // signature brews
+      { cat: 'Signature Brews', name: 'Espresso Romano', desc: 'Shot d\'espresso intense avec une touche de citron', price: 4.500, trending: true, image: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04' },
+      { cat: 'Signature Brews', name: 'V60 Ethiopia', desc: 'Café filtre floral aux notes de jasmin', price: 8.500, trending: false, image: 'https://images.unsplash.com/photo-1544787210-2211d2471d7b' },
+      { cat: 'Signature Brews', name: 'Gold Latte', desc: 'Espresso, lait soyeux et fine poudre d\'or comestible', price: 12.000, trending: true, image: 'https://images.unsplash.com/photo-1534778101976-62847782c213' },
+      { cat: 'Signature Brews', name: 'Flat White', desc: 'Texture crémeuse parfaite, torréfaction brune', price: 6.800, trending: false, image: 'https://images.unsplash.com/photo-1577968897866-be520b29d407' },
+      { cat: 'Signature Brews', name: 'Syphon Coffee', desc: 'Méthode d\'extraction visuelle et pure', price: 10.500, trending: false, image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085' },
+
+      // iced refreshers
+      { cat: 'Iced Refreshers', name: 'Cold Brew Tonic', desc: 'Infusion à froid, tonic premium et romarin', price: 7.200, trending: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4b1bf18a' },
+      { cat: 'Iced Refreshers', name: 'Matcha Iced Latte', desc: 'Thé vert japonais et lait d\'amande sur glace', price: 9.000, trending: true, image: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7' },
+      { cat: 'Iced Refreshers', name: 'Iced Americano', desc: 'Shot double sur glace cristalline', price: 5.500, trending: false, image: 'https://images.unsplash.com/photo-1551030173-122aabc4489c' },
+      { cat: 'Iced Refreshers', name: 'Rosewater Cold Brew', desc: 'Notes florales délicates et café noir', price: 8.000, trending: false, image: 'https://images.unsplash.com/photo-1461023058943-07cb126dfb8a' },
+
+      // artisan tea
+      { cat: 'Artisan Tea', name: 'Jasmine Pearl', desc: 'Thé vert roulé à la main, parfum naturel', price: 6.500, trending: false, image: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12' },
+      { cat: 'Artisan Tea', name: 'Earl Grey Royal', desc: 'Thé noir bergamote et pétales de bleuet', price: 6.000, trending: true, image: 'https://images.unsplash.com/photo-1563911302283-d2bc129e7570' },
+      { cat: 'Artisan Tea', name: 'Mint Bliss', desc: 'Menthe fraîche et thé vert de montagne', price: 5.500, trending: false, image: 'https://images.unsplash.com/photo-144933325662ef-447543818e80' },
+
+      // morning pastries
+      { cat: 'Morning Pastries', name: 'Almond Croissant', desc: 'Double cuisson, crème d\'amande et effilées', price: 5.200, trending: true, image: 'https://images.unsplash.com/photo-1555507036-ab1f40ce88f7' },
+      { cat: 'Morning Pastries', name: 'Pain au Chocolat', desc: 'Feuilletage pur beurre, bâtons de chocolat noir', price: 4.800, trending: false, image: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec' },
+      { cat: 'Morning Pastries', name: 'Kouign-Amann', desc: 'Spécialité bretonne caramélisée au beurre', price: 6.000, trending: true, image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff' },
+      { cat: 'Morning Pastries', name: 'Fruit Danish', desc: 'Pâtisserie aux fruits de saison et crème', price: 5.500, trending: false, image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad' },
+
+      // gourmette cakes
+      { cat: 'Gourmette Cakes', name: 'Pistachio Tiramisu', desc: 'Mascarpone, pistache d\'Italie et biscuits café', price: 12.500, trending: true, image: 'https://images.unsplash.com/photo-1571115177098-24c42de1bd0f' },
+      { cat: 'Gourmette Cakes', name: 'Opera Cake', desc: 'Couches fines de café, ganache et biscuit joconde', price: 10.000, trending: true, image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b' },
+      { cat: 'Gourmette Cakes', name: 'Lemon Meringue Tart', desc: 'Crème citron acide et meringue italienne', price: 9.500, trending: false, image: 'https://images.unsplash.com/photo-1519915028121-7d3463d20b13' },
+      { cat: 'Gourmette Cakes', name: 'Velvet Cheesecake', desc: 'Fromage à la crème vanillé et base croquante', price: 11.000, trending: false, image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad' },
+
+      // savoury bites
+      { cat: 'Savoury Bites', name: 'Avocado Toast', desc: 'Pain au levain, avocat frais, graines et piment', price: 14.500, trending: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8' },
+      { cat: 'Savoury Bites', name: 'Quiche Lorraine', desc: 'Tarte salée traditionnelle au bacon et fromage', price: 12.000, trending: false, image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26' },
+      { cat: 'Savoury Bites', name: 'Smoked Salmon Bagel', desc: 'Cream cheese, saumon fumé et aneth', price: 16.000, trending: true, image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666' },
     ];
 
     for (const p of products) {
       const catId = categoryMap[p.cat];
       if (catId) {
         await client.query(`
-<<<<<<< HEAD
           INSERT INTO products (category_id, name, description, price, image_url, is_active, is_trending)
           VALUES ($1, $2, $3, $4, $5, true, $6)
-        `, [catId, p.name, p.desc, p.price, p.image_url, p.trending]);
-=======
-          INSERT INTO products (category_id, name, description, price, is_active, is_trending)
-          VALUES ($1, $2, $3, $4, true, $5)
-          ON CONFLICT (name) DO NOTHING
-        `, [catId, p.name, p.desc, p.price, p.trending]);
->>>>>>> fead0af5e7ba07ee7750ed7449b4dd9992747298
+          ON CONFLICT (name) DO UPDATE SET 
+            description = EXCLUDED.description,
+            price = EXCLUDED.price,
+            image_url = EXCLUDED.image_url,
+            is_trending = EXCLUDED.is_trending
+        `, [catId, p.name, p.desc, p.price, p.image, p.trending]);
       }
     }
     
     // =====================================================
-    // SEED LOYALTY ACCOUNTS (name-based)
+    // SEED LOYALTY ACCOUNTS
     // =====================================================
     console.log('💳 Création des comptes de loyauté...');
     await client.query(`
-      INSERT INTO loyalty_accounts (customer_name, customer_id_number, points, total_earned)
+      INSERT INTO loyalty_accounts (customer_name, customer_id_number, phone_number, points, total_earned)
       VALUES 
-        ('Ahmed', '12345', 0, 0),
-        ('Fatima', '67890', 100, 500),
-        ('Mohammed', NULL, 50, 200)
-      ON CONFLICT DO NOTHING
+        ('Ahmed', '12345', '22111333', 120, 1000),
+        ('Fatima', '67890', '55444666', 350, 2500),
+        ('Mohammed', '11223', '99888777', 50, 200)
+      ON CONFLICT (customer_name, customer_id_number) DO NOTHING
     `);
     
     await client.query('COMMIT');
-    console.log('✅ Seed terminé avec succès!');
+    console.log('✅ Seed gourmet terminé avec succès!');
     
   } catch (error) {
     await client.query('ROLLBACK');

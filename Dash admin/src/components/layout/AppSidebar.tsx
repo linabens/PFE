@@ -21,6 +21,7 @@ const navGroups = [
     items: [
       { title: 'Products', path: '/products', icon: Coffee },
       { title: 'Categories', path: '/categories', icon: Grid3X3 },
+      { title: 'Promotions', path: '/promotions', icon: TrendingUp },
       { title: 'Tables & QR', path: '/tables', icon: QrCode },
     ],
   },

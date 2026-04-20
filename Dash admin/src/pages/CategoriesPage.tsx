@@ -21,8 +21,7 @@ export default function CategoriesPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    type: 'coffee',
-    display_order: ''
+    type: 'coffee'
   });
 
   const getProductCount = (categoryId: number) => {
@@ -36,21 +35,19 @@ export default function CategoriesPage() {
       if (editingCategory) {
         await updateCategory(editingCategory.id, {
           name: formData.name,
-          type: formData.type,
-          display_order: formData.display_order ? parseInt(formData.display_order) : null
+          type: formData.type
         });
         toast.success('Category updated');
       } else {
         await addCategory({
           name: formData.name,
-          type: formData.type,
-          display_order: formData.display_order ? parseInt(formData.display_order) : null
+          type: formData.type
         });
         toast.success('Category created');
       }
       setShowPanel(false);
       setEditingCategory(null);
-      setFormData({ name: '', type: 'coffee', display_order: '' });
+      setFormData({ name: '', type: 'coffee' });
     } catch (error: any) {
       toast.error(error.message || 'Action failed');
     } finally {
@@ -84,8 +81,7 @@ export default function CategoriesPage() {
     setEditingCategory(cat);
     setFormData({
       name: cat.name,
-      type: cat.type,
-      display_order: cat.display_order?.toString() || ''
+      type: cat.type
     });
     setShowPanel(true);
   };
@@ -99,7 +95,7 @@ export default function CategoriesPage() {
           whileTap={{ scale: 0.97 }}
           onClick={() => {
             setEditingCategory(null);
-            setFormData({ name: '', type: 'coffee', display_order: '' });
+            setFormData({ name: '', type: 'coffee' });
             setShowPanel(true);
           }}
           className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 shadow-lg shadow-primary/20"
@@ -145,7 +141,7 @@ export default function CategoriesPage() {
                 </div>
 
                 <div className="flex items-center justify-between gap-2 pt-4 border-t border-border">
-                  <span className="text-[10px] text-muted-foreground font-mono">Order: {cat.display_order || '-'}</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">Type: {cat.type}</span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => toggleAllInCategory(cat.id, true)}
@@ -233,16 +229,6 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Display Order</label>
-                  <input
-                    type="number"
-                    value={formData.display_order}
-                    onChange={(e) => setFormData({ ...formData, display_order: e.target.value })}
-                    placeholder="Optional"
-                    className="w-full h-11 px-4 rounded-xl bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
 
                 <motion.button
                   whileHover={{ scale: 1.01 }}

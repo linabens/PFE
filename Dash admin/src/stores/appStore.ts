@@ -57,6 +57,16 @@ export interface AssistanceRequest {
   handled: boolean;
 }
 
+export interface Promotion {
+  id: string;
+  title: string;
+  subtitle: string;
+  tag: string;
+  imageUrl: string;
+  active: boolean;
+  displayOrder: number;
+}
+
 export interface DashboardStats {
   today: {
     total_orders: number;
@@ -93,6 +103,7 @@ interface AppState {
   loyaltyMembers: LoyaltyMember[];
   assistanceRequests: AssistanceRequest[];
   allAssistanceRequests: AssistanceRequest[];
+  promotions: Promotion[];
   dashboardStats: DashboardStats | null;
 
   // Actions
@@ -104,11 +115,17 @@ interface AppState {
   fetchLoyalty: () => Promise<void>;
   fetchAssistance: () => Promise<void>;
   fetchAllAssistance: () => Promise<void>;
+  fetchPromotions: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
   fetchDashboardSummary: (period: 'today' | 'week' | 'month') => Promise<void>;
 
   advanceOrderStatus: (orderId: string, nextStatus: OrderStatus) => Promise<void>;
   handleAssistance: (id: string) => Promise<void>;
+
+  // Promotion Actions
+  addPromotion: (promo: Omit<Promotion, 'id'>) => Promise<void>;
+  deletePromotion: (id: string) => Promise<void>;
+  togglePromotionStatus: (id: string, currentStatus: boolean) => Promise<void>;
 
   // Product Actions
   toggleProductActive: (id: string, currentStatus: boolean) => Promise<void>;
@@ -145,6 +162,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   loyaltyMembers: [],
   assistanceRequests: [],
   allAssistanceRequests: [],
+  promotions: [],
   dashboardStats: null,
 
   fetchInitialData: async () => {
@@ -158,6 +176,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         get().fetchTables(),
         get().fetchAssistance(),
         get().fetchLoyalty(),
+        get().fetchPromotions(),
       ]);
     } catch (err: any) {
       console.error('Fetch Initial Data Error:', err);
@@ -287,6 +306,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
+  fetchPromotions: async () => {
+    const data = await api.get<any[]>('/promotions/all');
+    set({
+      promotions: data.map(p => ({
+        id: p.id.toString(),
+        title: p.title,
+        subtitle: p.subtitle,
+        tag: p.tag,
+        imageUrl: p.image_url,
+        active: p.is_active,
+        displayOrder: p.display_order
+      }))
+    });
+  },
+
   advanceOrderStatus: async (orderId, nextStatus) => {
     await api.patch(`/orders/${orderId}/status`, { status: nextStatus });
     await get().fetchOrders();
@@ -347,5 +381,26 @@ export const useAppStore = create<AppState>((set, get) => ({
   deleteTable: async (id) => {
     await api.delete(`/tables/${id}`);
     await get().fetchTables();
+  },
+
+  addPromotion: async (promo) => {
+    await api.post('/promotions', {
+      title: promo.title,
+      subtitle: promo.subtitle,
+      tag: promo.tag,
+      image_url: promo.imageUrl,
+      display_order: promo.displayOrder
+    });
+    await get().fetchPromotions();
+  },
+
+  deletePromotion: async (id) => {
+    await api.delete(`/promotions/${id}`);
+    await get().fetchPromotions();
+  },
+
+  togglePromotionStatus: async (id, currentStatus) => {
+    await api.patch(`/promotions/${id}/status`, { is_active: !currentStatus });
+    await get().fetchPromotions();
   },
 }));

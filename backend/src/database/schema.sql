@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     category_id INT REFERENCES categories(id) ON DELETE SET NULL,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(150) UNIQUE NOT NULL,
     description TEXT,
     -- TND: on garde 3 décimales (millimes)
     price DECIMAL(10,3) NOT NULL,

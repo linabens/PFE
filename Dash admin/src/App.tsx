@@ -15,6 +15,7 @@ import LoginPage from "@/pages/LoginPage";
 import AssistancePage from "@/pages/AssistancePage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import StaffAccountsPage from "@/pages/StaffAccountsPage";
+import PromotionsPage from "@/pages/PromotionsPage";
 import NotFound from "./pages/NotFound.tsx";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/assistance" element={<AssistancePage />} />
               <Route path="/revenue" element={<RevenuePage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/promotions" element={<PromotionsPage />} />
               <Route path="/staff" element={<StaffAccountsPage />} />
               <Route path="/system" element={<PlaceholderPage title="System Settings" />} />
             </Route>

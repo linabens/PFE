@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Coffee, Lock, Mail, Loader2 } from 'lucide-react';
+import { Coffee, Lock, Mail, Loader2, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
           navigate('/');
         }
       } else {
-        toast.error(result.error || 'Authentication failed');
+        toast.error(result.message || result.error || 'Authentication failed');
       }
     } catch (error) {
       toast.error('Failed to connect to server');
@@ -105,7 +105,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@cafe.com"
+                  placeholder="admin@coffee.com"
                   className="w-full h-11 pl-10 pr-4 rounded-xl bg-secondary/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted-foreground/30"
                 />
               </div>
@@ -149,7 +149,7 @@ export default function LoginPage() {
             </button>
             {!isRegistering && (
               <p className="text-[10px] text-muted-foreground/40 leading-relaxed uppercase tracking-wider">
-                Demo access: admin@cafe.com / admin123
+                Demo access: admin@coffee.com / admin123
               </p>
             )}
           </div>

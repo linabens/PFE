@@ -30,6 +30,7 @@ const entertainmentRoutes = require('./routes/entertainmentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const loyaltyRoutes = require('./routes/loyaltyRoutes');
 const tableRoutes = require('./routes/tableRoutes');
+const promotionRoutes = require('./routes/promotionRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes); // public session endpoints
@@ -44,6 +45,7 @@ app.use('/api/assistance', assistanceRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/tables', tableRoutes);
+app.use('/api/promotions', promotionRoutes);
 
 // Gestion des erreurs
 const { errorHandler, notFoundHandler } = require('./middleware');
