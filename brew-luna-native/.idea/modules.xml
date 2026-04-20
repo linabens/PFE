@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+<<<<<<< HEAD
+      <module fileurl="file://$PROJECT_DIR$/.idea/brew-luna-native.iml" filepath="$PROJECT_DIR$/.idea/brew-luna-native.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/finale pfe.iml" filepath="$PROJECT_DIR$/.idea/finale pfe.iml" />
+>>>>>>> fbb913c8b84aac35139ec486840a3d71790c5134
+    </modules>
+  </component>
+</project>
