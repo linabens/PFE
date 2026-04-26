@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+<<<<<<< HEAD
+    <mapping directory="" vcs="Git" />
+=======
+    <mapping directory="$PROJECT_DIR$/brew-luna-native" vcs="Git" />
+>>>>>>> fbb913c8b84aac35139ec486840a3d71790c5134
+  </component>
+</project>

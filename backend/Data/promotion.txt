@@ -1,0 +1,24 @@
+=== PROMOTIONS BREWLUNA ===
+
+--- OFFRES DU MOMENT ---
+- Happy Hour : de 15h à 17h, tous les cafés à -20%
+- Offre Fidélité : à partir de 500 points, café gratuit
+- Offre Découverte : première visite = +100 points de bienvenue
+- Weekend spécial : samedi et dimanche, Cheesecake offert pour toute commande > 10 TND
+
+--- PROGRAMME DE FIDÉLITÉ ---
+- 10 points gagnés par 1 TND dépensé
+- Niveaux : Bronze (0pts) → Silver (500pts) → Gold (1500pts) → Platinum (4000pts)
+- Récompenses :
+  * 150 pts = Espresso gratuit
+  * 300 pts = Réduction 10%
+  * 400 pts = Pâtisserie gratuite
+  * 500 pts = Latte gratuit
+  * 800 pts = Réduction 25%
+  * 1200 pts = Tournée de cafés pour la table
+
+--- JEUX ---
+- Jouer à un jeu = jusqu'à 80 points bonus
+  * Niveau Facile = +20 pts
+  * Niveau Moyen = +40 pts
+  * Niveau Difficile = +80 pts

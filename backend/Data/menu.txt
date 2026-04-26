@@ -1,0 +1,26 @@
+=== MENU BREWLUNA ===
+
+--- CAFÉS ---
+- Espresso : 2.50 TND | Café court et intense, pur arabica. Sans lactose. Caféine élevée.
+- Americano : 2.80 TND | Espresso allongé à l'eau chaude. Goût doux et léger.
+- Cappuccino : 3.80 TND | Espresso + lait chaud + mousse de lait onctueuse.
+- Mocha Latte : 4.20 TND | Espresso + chocolat + lait chaud. Pour les amateurs de sucré.
+
+--- LATTES ---
+- Chai Latte : 3.90 TND | Thé épicé + lait chaud. Contient : cannelle, gingembre, cardamome.
+- Vanilla Latte : 4.00 TND | Espresso + lait + sirop vanille. Doux et parfumé.
+
+--- THÉS ---
+- Matcha Tea : 3.50 TND | Thé vert japonais en poudre + lait végétal. Antioxydant.
+- Menthe Fraîche : 2.00 TND | Thé à la menthe fraîche. Sans caféine. Idéal après repas.
+
+--- PÂTISSERIES ---
+- Croissant : 2.00 TND | Croissant pur beurre, feuilleté. Contient : gluten, lactose.
+- Chocolate Cake : 4.50 TND | Fondant au chocolat noir. Contient : gluten, lactose, œufs.
+- Cheesecake : 5.00 TND | Cheesecake nature avec coulis fruits rouges.
+
+--- COMBOS RECOMMANDÉS PAR LE STAFF ---
+- Combo Matin : Espresso + Croissant = 4.00 TND (économise 0.50 TND)
+- Combo Doux : Vanilla Latte + Cheesecake = 8.50 TND (économise 0.50 TND)
+- Combo Chocolat : Mocha Latte + Chocolate Cake = 8.00 TND (économise 0.70 TND)
+- Combo Santé : Matcha Tea + Cheesecake = 8.00 TND (économise 0.50 TND)

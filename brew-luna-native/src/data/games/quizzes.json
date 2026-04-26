@@ -1,0 +1,116 @@
+{
+  "monde": {
+    "facile": [
+      { "question": "Quelle est la capitale de la France ?", "options": ["Lyon", "Marseille", "Paris", "Bordeaux"], "answer": 2, "points": 10 },
+      { "question": "Quel est l'océan le plus grand du monde ?", "options": ["Atlantique", "Indien", "Arctique", "Pacifique"], "answer": 3, "points": 10 },
+      { "question": "Sur quel continent se trouve l'Égypte ?", "options": ["Asie", "Europe", "Afrique", "Amérique"], "answer": 2, "points": 10 },
+      { "question": "Quelle est la capitale de l'Italie ?", "options": ["Milan", "Rome", "Naples", "Turin"], "answer": 1, "points": 10 },
+      { "question": "Quel est le pays le plus grand du monde ?", "options": ["Canada", "Chine", "États-Unis", "Russie"], "answer": 3, "points": 10 },
+      { "question": "Dans quel pays se trouve la Tour de Pise ?", "options": ["Espagne", "France", "Grèce", "Italie"], "answer": 3, "points": 10 },
+      { "question": "Quelle est la capitale de l'Espagne ?", "options": ["Barcelone", "Séville", "Madrid", "Valence"], "answer": 2, "points": 10 },
+      { "question": "Quel fleuve passe par Paris ?", "options": ["Rhin", "Loire", "Rhône", "Seine"], "answer": 3, "points": 10 },
+      { "question": "Quelle est la plus haute montagne du monde ?", "options": ["K2", "Mont Blanc", "Everest", "Kilimandjaro"], "answer": 2, "points": 10 },
+      { "question": "Sur quel continent se trouve le Brésil ?", "options": ["Amérique du Nord", "Afrique", "Amérique du Sud", "Asie"], "answer": 2, "points": 10 }
+    ],
+    "moyen": [
+      { "question": "Quelle est la capitale de l'Australie ?", "options": ["Sydney", "Melbourne", "Canberra", "Brisbane"], "answer": 2, "points": 20 },
+      { "question": "Quel est le pays le plus peuplé du monde ?", "options": ["Inde", "Chine", "États-Unis", "Indonésie"], "answer": 0, "points": 20 },
+      { "question": "Quelle est la monnaie officielle du Japon ?", "options": ["Won", "Yuan", "Yen", "Ringgit"], "answer": 2, "points": 20 },
+      { "question": "Combien de pays composent le continent africain ?", "options": ["42", "54", "68", "72"], "answer": 1, "points": 20 },
+      { "question": "Quel est le plus petit pays du monde ?", "options": ["Monaco", "Saint-Marin", "Vatican", "Liechtenstein"], "answer": 2, "points": 20 },
+      { "question": "Quel pays possède le plus d'îles au monde ?", "options": ["Indonésie", "Philippines", "Suède", "Norvège"], "answer": 2, "points": 20 },
+      { "question": "Quelle est la capitale du Canada ?", "options": ["Toronto", "Montréal", "Vancouver", "Ottawa"], "answer": 3, "points": 20 },
+      { "question": "Dans quel pays se trouve la ville de Dubaï ?", "options": ["Qatar", "Arabie Saoudite", "Bahreïn", "Émirats Arabes Unis"], "answer": 3, "points": 20 },
+      { "question": "Quel fleuve est le plus long d'Afrique ?", "options": ["Congo", "Niger", "Zambèze", "Nil"], "answer": 3, "points": 20 },
+      { "question": "Quelle chaîne de montagnes sépare l'Europe de l'Asie ?", "options": ["Alpes", "Pyrénées", "Oural", "Caucase"], "answer": 2, "points": 20 }
+    ],
+    "difficile": [
+      { "question": "Quelle est la capitale des Maldives ?", "options": ["Malé", "Addu City", "Kulhudhuffushi", "Fuvahmulah"], "answer": 0, "points": 30 },
+      { "question": "Quel est le pays avec le plus grand nombre de frontières terrestres ?", "options": ["Russie", "Chine", "Brésil", "Allemagne"], "answer": 1, "points": 30 },
+      { "question": "Dans quel pays se trouve le lac Baïkal, le plus profond du monde ?", "options": ["Mongolie", "Kazakhstan", "Russie", "Ukraine"], "answer": 2, "points": 30 },
+      { "question": "Quelle est la capitale du Kazakhstan ?", "options": ["Almaty", "Astana", "Shymkent", "Karagandy"], "answer": 1, "points": 30 },
+      { "question": "Quel détroit sépare l'Espagne du Maroc ?", "options": ["Détroit de Malacca", "Détroit de Bosphore", "Détroit de Gibraltar", "Détroit de Magellan"], "answer": 2, "points": 30 },
+      { "question": "Quel est le seul pays d'Amérique du Sud sans accès à la mer ?", "options": ["Paraguay et Bolivie", "Équateur", "Pérou", "Uruguay"], "answer": 0, "points": 30 },
+      { "question": "Quelle est la capitale de la Géorgie (pays) ?", "options": ["Batoumi", "Tbilissi", "Koutaïssi", "Roustavi"], "answer": 1, "points": 30 },
+      { "question": "Dans quel pays se trouve l'archipel de Svalbard ?", "options": ["Danemark", "Islande", "Norvège", "Finlande"], "answer": 2, "points": 30 },
+      { "question": "Quel pays a la plus longue frontière côtière du monde ?", "options": ["Russie", "Australie", "Canada", "Indonésie"], "answer": 2, "points": 30 },
+      { "question": "Quelle ville est surnommée 'La Cité des Vents' ?", "options": ["Boston", "Chicago", "New York", "Seattle"], "answer": 1, "points": 30 }
+    ]
+  },
+  "sport": {
+    "facile": [
+      { "question": "Combien de joueurs compose une équipe de football sur le terrain ?", "options": ["10", "11", "12", "9"], "answer": 1, "points": 10 },
+      { "question": "Quel sport se pratique à Wimbledon ?", "options": ["Golf", "Tennis", "Cricket", "Squash"], "answer": 1, "points": 10 },
+      { "question": "Dans quel sport marque-t-on des 'tries' ?", "options": ["Football", "Basketball", "Rugby", "Handball"], "answer": 2, "points": 10 },
+      { "question": "Quelle équipe a remporté la Coupe du Monde 2018 ?", "options": ["Brésil", "Allemagne", "Argentine", "France"], "answer": 3, "points": 10 },
+      { "question": "Combien de sets peut-on gagner au maximum en tennis ?", "options": ["3", "4", "5", "6"], "answer": 2, "points": 10 },
+      { "question": "Dans quel sport Michael Jordan est-il légendaire ?", "options": ["Baseball", "Football Américain", "Basketball", "Hockey"], "answer": 2, "points": 10 },
+      { "question": "Combien y a-t-il de joueurs dans une équipe de basketball ?", "options": ["4", "5", "6", "7"], "answer": 1, "points": 10 },
+      { "question": "Quel pays a organisé la Coupe du Monde 2022 ?", "options": ["Russie", "Brésil", "Qatar", "Émirais Arabes Unis"], "answer": 2, "points": 10 },
+      { "question": "Quel sport se joue avec un volant ?", "options": ["Tennis de table", "Squash", "Badminton", "Racquetball"], "answer": 2, "points": 10 },
+      { "question": "Combien de temps dure un match de handball (2 mi-temps) ?", "options": ["60 min", "80 min", "90 min", "70 min"], "answer": 0, "points": 10 }
+    ],
+    "moyen": [
+      { "question": "Quel joueur de tennis a remporté le plus de titres du Grand Chelem ?", "options": ["Rafael Nadal", "Novak Djokovic", "Roger Federer", "Pete Sampras"], "answer": 1, "points": 20 },
+      { "question": "Dans quel pays les JO de 2024 ont-ils eu lieu ?", "options": ["Espagne", "Italie", "France", "Grèce"], "answer": 2, "points": 20 },
+      { "question": "Quel club a remporté le plus de Ligues des Champions ?", "options": ["FC Barcelone", "Bayern Munich", "Real Madrid", "Manchester United"], "answer": 2, "points": 20 },
+      { "question": "Combien de médailles d'or Usain Bolt a-t-il remportées aux JO ?", "options": ["6", "7", "8", "9"], "answer": 2, "points": 20 },
+      { "question": "Quel pays a remporté le plus de Coupes du Monde de football ?", "options": ["Allemagne", "Argentine", "Brésil", "Italie"], "answer": 2, "points": 20 },
+      { "question": "Dans quel sport le terme 'épée' est-il utilisé ?", "options": ["Escrime", "Lutte", "Judo", "Taekwondo"], "answer": 0, "points": 20 },
+      { "question": "Quel nageur a remporté le plus de médailles olympiques ?", "options": ["Ian Thorpe", "Ryan Lochte", "Michael Phelps", "Mark Spitz"], "answer": 2, "points": 20 },
+      { "question": "Combien de joueurs sont sur le terrain en volleyball ?", "options": ["5", "6", "7", "8"], "answer": 1, "points": 20 },
+      { "question": "Quel est le Grand Chelem joué sur terre battue ?", "options": ["Wimbledon", "Open d'Australie", "Roland-Garros", "US Open"], "answer": 2, "points": 20 },
+      { "question": "Quel pays a remporté le plus de titres en Formule 1 constructeurs ?", "options": ["Mercedes", "Ferrari", "Red Bull", "McLaren"], "answer": 1, "points": 20 }
+    ],
+    "difficile": [
+      { "question": "En quelle année les JO modernes ont-ils été créés ?", "options": ["1892", "1896", "1900", "1888"], "answer": 1, "points": 30 },
+      { "question": "Quel est le record du monde du 100m masculin ?", "options": ["9.58s", "9.63s", "9.72s", "9.81s"], "answer": 0, "points": 30 },
+      { "question": "Combien de fois le Brésil a-t-il remporté la Coupe du Monde ?", "options": ["3", "4", "5", "6"], "answer": 2, "points": 30 },
+      { "question": "Quel joueur est surnommé 'The GOAT' au tennis féminin ?", "options": ["Maria Sharapova", "Martina Navratilova", "Steffi Graf", "Serena Williams"], "answer": 3, "points": 30 },
+      { "question": "Dans quel pays est né le rugby à XV ?", "options": ["France", "Écosse", "Angleterre", "Irlande"], "answer": 2, "points": 30 },
+      { "question": "Quel club français a remporté la Ligue des Champions ?", "options": ["PSG", "Lyon", "Marseille", "Monaco"], "answer": 2, "points": 30 },
+      { "question": "Quel athlète a remporté le plus de médailles d'or aux mêmes JO ?", "options": ["Mark Spitz (1972)", "Michael Phelps (2008)", "Carl Lewis (1984)", "Paavo Nurmi (1924)"], "answer": 1, "points": 30 },
+      { "question": "En quelle année Tiger Woods a-t-il réalisé son premier Grand Chelem de golf ?", "options": ["1997", "2000", "2001", "2003"], "answer": 2, "points": 30 },
+      { "question": "Quel est le poids minimum d'un ballon de football officiel (en grammes) ?", "options": ["380g", "410g", "420g", "450g"], "answer": 1, "points": 30 },
+      { "question": "Qui est l'entraîneur le plus titré en Ligue des Champions ?", "options": ["José Mourinho", "Pep Guardiola", "Carlo Ancelotti", "Zinedine Zidane"], "answer": 2, "points": 30 }
+    ]
+  },
+  "culture": {
+    "facile": [
+      { "question": "Qui a peint la Joconde ?", "options": ["Michelangelo", "Raphaël", "Léonard de Vinci", "Botticelli"], "answer": 2, "points": 10 },
+      { "question": "Quel auteur a écrit 'Harry Potter' ?", "options": ["Stephen King", "J.R.R. Tolkien", "J.K. Rowling", "Roald Dahl"], "answer": 2, "points": 10 },
+      { "question": "En quelle année a été construite la Tour Eiffel ?", "options": ["1875", "1889", "1901", "1863"], "answer": 1, "points": 10 },
+      { "question": "Quel est le symbole chimique de l'or ?", "options": ["Or", "Ag", "Au", "Fe"], "answer": 2, "points": 10 },
+      { "question": "Combien de cordes possède une guitare classique ?", "options": ["4", "5", "6", "7"], "answer": 2, "points": 10 },
+      { "question": "Quel film a remporté l'Oscar du meilleur film en 2020 ?", "options": ["Joker", "1917", "Parasite", "Ford v Ferrari"], "answer": 2, "points": 10 },
+      { "question": "Dans quel pays est né Mozart ?", "options": ["Allemagne", "Autriche", "Suisse", "Hongrie"], "answer": 1, "points": 10 },
+      { "question": "Quel est l'instrument du roi de la pop Michael Jackson ?", "options": ["Guitare", "Piano", "Sa voix", "Batterie"], "answer": 2, "points": 10 },
+      { "question": "Quel auteur a écrit 'Les Misérables' ?", "options": ["Honoré de Balzac", "Victor Hugo", "Émile Zola", "Alexandre Dumas"], "answer": 1, "points": 10 },
+      { "question": "Quelle est la couleur associée à la jalousie en français ?", "options": ["Rouge", "Vert", "Jaune", "Bleu"], "answer": 2, "points": 10 }
+    ],
+    "moyen": [
+      { "question": "Quel peintre est célèbre pour ses 'Tournesols' ?", "options": ["Claude Monet", "Pablo Picasso", "Vincent van Gogh", "Paul Gauguin"], "answer": 2, "points": 20 },
+      { "question": "Combien de langues officielles y a-t-il en Suisse ?", "options": ["2", "3", "4", "5"], "answer": 2, "points": 20 },
+      { "question": "Dans quel empire Jules César était-il général ?", "options": ["Empire Grec", "Empire Ottoman", "Empire Romain", "Empire Perse"], "answer": 2, "points": 20 },
+      { "question": "Quel compositeur était sourd quand il a composé sa 9ème symphonie ?", "options": ["Mozart", "Bach", "Beethoven", "Chopin"], "answer": 2, "points": 20 },
+      { "question": "Quel est le musée le plus visité au monde ?", "options": ["British Museum", "Metropolitan Museum", "Musée du Louvre", "Hermitage"], "answer": 2, "points": 20 },
+      { "question": "Quelle langue est la plus parlée dans le monde ?", "options": ["Anglais", "Espagnol", "Mandarin", "Hindi"], "answer": 2, "points": 20 },
+      { "question": "Dans quel siècle la Renaissance italienne a-t-elle débuté ?", "options": ["XIIIe", "XIVe", "XVe", "XVIe"], "answer": 1, "points": 20 },
+      { "question": "Quel auteur a écrit '1984' ?", "options": ["Aldous Huxley", "George Orwell", "Ray Bradbury", "Arthur Koestler"], "answer": 1, "points": 20 },
+      { "question": "Quel artiste a coupé son oreille ?", "options": ["Paul Cézanne", "Paul Gauguin", "Vincent van Gogh", "Henri Matisse"], "answer": 2, "points": 20 },
+      { "question": "Quelle est la plus ancienne université du monde encore en activité ?", "options": ["Université de Paris", "Université de Bologne", "Université d'Oxford", "Université de Cambridge"], "answer": 1, "points": 20 }
+    ],
+    "difficile": [
+      { "question": "Quel philosophe grec a été condamné à mort par la ciguë ?", "options": ["Platon", "Aristote", "Socrate", "Épicure"], "answer": 2, "points": 30 },
+      { "question": "En quelle année Gutenberg a-t-il inventé l'imprimerie ?", "options": ["1440", "1450", "1455", "1465"], "answer": 1, "points": 30 },
+      { "question": "Quel est l'opéra le plus représenté dans le monde ?", "options": ["Carmen", "La Traviata", "La Flûte Enchantée", "Rigoletto"], "answer": 0, "points": 30 },
+      { "question": "Qui a écrit 'À la recherche du temps perdu' ?", "options": ["Gustave Flaubert", "Marcel Proust", "Stendhal", "André Gide"], "answer": 1, "points": 30 },
+      { "question": "Dans quel pays est né le mouvement Dada ?", "options": ["France", "Allemagne", "Suisse", "Italie"], "answer": 2, "points": 30 },
+      { "question": "Quel pharaon a fait construire la grande pyramide de Gizeh ?", "options": ["Ramsès II", "Toutankhamon", "Khéphren", "Khéops"], "answer": 3, "points": 30 },
+      { "question": "En quelle année Picasso a-t-il peint 'Guernica' ?", "options": ["1935", "1937", "1939", "1941"], "answer": 1, "points": 30 },
+      { "question": "Quel écrivain français a refusé le Prix Nobel de Littérature ?", "options": ["Albert Camus", "Jean-Paul Sartre", "Claude Simon", "Samuel Beckett"], "answer": 1, "points": 30 },
+      { "question": "Quelle civilisation a inventé les zéros ?", "options": ["Grecque", "Égyptienne", "Maya et Indienne", "Romaine"], "answer": 2, "points": 30 },
+      { "question": "Quel est le vrai nom de Molière ?", "options": ["François-Marie Arouet", "Jean-Baptiste Poquelin", "Pierre de Marivaux", "Jean Racine"], "answer": 1, "points": 30 }
+    ]
+  }
+}

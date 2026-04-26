@@ -1,0 +1,12 @@
+=== FAQ BREWLUNA ===
+
+- Horaires : ouvert du lundi au samedi de 7h à 22h, dimanche de 9h à 20h
+- Paiement : espèces et cartes bancaires acceptées
+- Wifi : wifi gratuit disponible, mot de passe demandable au staff
+- Allergènes : informez le staff de toute allergie, nous adaptons les préparations
+- Commande : scannez le QR code de votre table pour commander depuis l'app
+- Livraison : pas de livraison, service sur place uniquement
+- Réservation : pas de réservation, premier arrivé premier servi
+- Animaux : animaux de compagnie acceptés en terrasse uniquement
+- Appel serveur : utilisez le bouton "Appeler le serveur" dans l'app
+- Facture : générez votre facture directement depuis l'app, onglet "Ma commande"
