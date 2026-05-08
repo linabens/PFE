@@ -49,10 +49,10 @@ export default function AnalyticsPage() {
   }, [period]);
 
   const stats = data ? [
-    { title: 'Gross Revenue', value: `$${data.stats.gross_revenue.value.toFixed(2)}`, change: data.stats.gross_revenue.change, icon: TrendingUp, positive: !data.stats.gross_revenue.change.startsWith('-') },
+    { title: 'Gross Revenue', value: `${data.stats.gross_revenue.value.toLocaleString()} DT`, change: data.stats.gross_revenue.change, icon: TrendingUp, positive: !data.stats.gross_revenue.change.startsWith('-') },
     { title: 'New Customers', value: data.stats.new_customers.value.toString(), change: data.stats.new_customers.change, icon: Users, positive: !data.stats.new_customers.change.startsWith('-') },
-    { title: 'Average Order', value: `$${data.stats.average_order.value.toFixed(2)}`, change: data.stats.average_order.change, icon: ShoppingBag, positive: !data.stats.average_order.change.startsWith('-') },
-    { title: 'Prep Efficiency', value: `${data.stats.prep_efficiency.value}m`, change: data.stats.prep_efficiency.change, icon: Clock, positive: data.stats.prep_efficiency.change.startsWith('-') }, // Negative change is good for time!
+    { title: 'Average Order', value: `${data.stats.average_order.value.toFixed(3)} DT`, change: data.stats.average_order.change, icon: ShoppingBag, positive: !data.stats.average_order.change.startsWith('-') },
+    { title: 'Prep Efficiency', value: `${data.stats.prep_efficiency.value}m`, change: data.stats.prep_efficiency.change, icon: Clock, positive: data.stats.prep_efficiency.change.startsWith('-') },
   ] : [];
 
   const maxPeak = data && data.peak_hours.length > 0 ? Math.max(...data.peak_hours) : 1;
@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
                     borderRadius: '12px',
                     color: 'hsl(var(--latte))'
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                  formatter={(value: number) => [`${value.toFixed(3)} DT`, 'Revenue']}
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
               </PieChart>

@@ -30,6 +30,8 @@ export interface Product {
   trending: boolean;
   seasonal: boolean;
   imageUrl?: string;
+  stockQuantity: number;
+  minStockLevel: number;
 }
 
 export interface CoffeeTable {
@@ -38,7 +40,9 @@ export interface CoffeeTable {
   capacity: number;
   status: TableStatus;
   activeOrders: number;
+  activeSessions: number;
   active: boolean;
+  qrCode: string;  // The actual QR code value stored in DB, used to build the scan URL
 }
 
 export interface LoyaltyMember {
@@ -98,6 +102,15 @@ export interface Category {
   display_order: number | null;
 }
 
+export interface User {
+  id: number;
+  full_name: string;
+  email: string;
+  role: 'admin' | 'staff' | 'client';
+  phone?: string;
+  avatar?: string;
+}
+
 interface AppState {
   sidebarCollapsed: boolean;
   loading: boolean;
@@ -112,8 +125,12 @@ interface AppState {
   allAssistanceRequests: AssistanceRequest[];
   promotions: Promotion[];
   dashboardStats: DashboardStats | null;
+  user: User | null;
 
   // Actions
+  setUser: (user: User | null) => void;
+  updateUser: (data: Partial<User>) => void;
+  isAdmin: () => boolean;
   fetchInitialData: () => Promise<void>;
   fetchProducts: () => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -147,6 +164,7 @@ interface AppState {
   // Table Actions
   addTable: (table: { number: number; capacity: number }) => Promise<void>;
   deleteTable: (id: string) => Promise<void>;
+  freeTable: (id: string) => Promise<void>;
 }
 
 const statusFlow: Record<OrderStatus, OrderStatus | null> = {
@@ -171,6 +189,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   allAssistanceRequests: [],
   promotions: [],
   dashboardStats: null,
+  user: localStorage.getItem('coffee_admin_user') 
+    ? JSON.parse(localStorage.getItem('coffee_admin_user')!) 
+    : null,
+
+  setUser: (user) => set({ user }),
+  updateUser: (data) => {
+    const updated = get().user ? { ...get().user!, ...data } : null;
+    set({ user: updated });
+    if (updated) localStorage.setItem('coffee_admin_user', JSON.stringify(updated));
+  },
+  isAdmin: () => get().user?.role === 'admin',
 
   fetchInitialData: async () => {
     set({ loading: true, error: null });
@@ -241,7 +270,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         active: p.is_active,
         trending: p.is_trending,
         seasonal: p.is_seasonal,
-        imageUrl: p.image_url
+        imageUrl: p.image_url,
+        stockQuantity: p.stock_quantity ?? 0,
+        minStockLevel: p.min_stock_level ?? 10
       }))
     });
   },
@@ -271,9 +302,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         id: t.id.toString(),
         number: t.table_number,
         capacity: t.capacity,
-        status: t.active_orders > 0 ? 'occupied' : 'free',
+        status: (t.active_orders > 0 || t.active_sessions > 0) ? 'occupied' : 'free',
         activeOrders: t.active_orders,
-        active: t.is_active
+        activeSessions: t.active_sessions,
+        active: t.is_active,
+        qrCode: t.qr_code || '',  // The unique code stored in DB, needed to build scan URLs
       }))
     });
   },
@@ -391,6 +424,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   deleteTable: async (id) => {
     await api.delete(`/tables/${id}`);
+    await get().fetchTables();
+  },
+
+  freeTable: async (id) => {
+    await api.post(`/admin/tables/${id}/sessions/close-all`, {});
     await get().fetchTables();
   },
 

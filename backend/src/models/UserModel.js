@@ -12,13 +12,13 @@ class UserModel {
   } 
 
   async create(userData) {
-    const { full_name, email, password_hash, role } = userData;
+    const { full_name, email, password_hash, role, avatar, security_question, security_answer } = userData;
     const query = `
-      INSERT INTO users (full_name, email, password_hash, role)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO users (full_name, email, password_hash, role, avatar, security_question, security_answer)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
-    const result = await pool.query(query, [full_name, email, password_hash, role]);
+    const result = await pool.query(query, [full_name, email, password_hash, role, avatar, security_question, security_answer]);
     return result.rows[0];
   }
 

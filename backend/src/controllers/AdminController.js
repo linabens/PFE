@@ -116,9 +116,9 @@ class AdminController {
             COUNT(o.id)::int AS total_orders,
             COALESCE(AVG(o.total_price), 0)::numeric(10,2) AS average_order,
             ROUND(AVG(EXTRACT(EPOCH FROM (o.completed_at - o.created_at)) / 60) FILTER (WHERE o.completed_at IS NOT NULL), 1) AS prep_efficiency,
-            (SELECT COUNT(*)::int FROM loyalty_accounts WHERE created_at >= NOW() - INTERVAL $1) AS new_customers
+            (SELECT COUNT(*)::int FROM loyalty_accounts WHERE created_at >= NOW() - $1::interval) AS new_customers
           FROM orders o
-          WHERE o.status = 'completed' AND o.created_at >= NOW() - INTERVAL $1
+          WHERE o.status = 'completed' AND o.created_at >= NOW() - $1::interval
         `, [interval]),
 
         // 2. Previous Period Stats (for percentage change calculation)
@@ -128,11 +128,11 @@ class AdminController {
             COUNT(o.id)::int AS prev_total_orders,
             COALESCE(AVG(o.total_price), 0)::numeric(10,2) AS prev_average_order,
             ROUND(AVG(EXTRACT(EPOCH FROM (o.completed_at - o.created_at)) / 60) FILTER (WHERE o.completed_at IS NOT NULL), 1) AS prev_prep_efficiency,
-            (SELECT COUNT(*)::int FROM loyalty_accounts WHERE created_at >= NOW() - INTERVAL $1 AND created_at < NOW() - INTERVAL $2) AS prev_new_customers
+            (SELECT COUNT(*)::int FROM loyalty_accounts WHERE created_at >= NOW() - $1::interval AND created_at < NOW() - $2::interval) AS prev_new_customers
           FROM orders o
           WHERE o.status = 'completed' 
-            AND o.created_at >= NOW() - INTERVAL $1
-            AND o.created_at < NOW() - INTERVAL $2
+            AND o.created_at >= NOW() - $1::interval
+            AND o.created_at < NOW() - $2::interval
         `, [`${days * 2} days`, interval]),
 
         // 3. Daily Revenue Chart
@@ -143,7 +143,7 @@ class AdminController {
             COALESCE(SUM(total_price), 0)::numeric(10,2) AS revenue,
             COUNT(id)::int AS orders
           FROM orders
-          WHERE status = 'completed' AND created_at >= NOW() - INTERVAL $1
+          WHERE status = 'completed' AND created_at >= NOW() - $1::interval
           GROUP BY DATE(created_at)
           ORDER BY full_date ASC
         `, [interval]),
@@ -157,7 +157,7 @@ class AdminController {
           JOIN products p ON p.id = oi.product_id
           JOIN categories c ON c.id = p.category_id
           JOIN orders o ON o.id = oi.order_id
-          WHERE o.status = 'completed' AND o.created_at >= NOW() - INTERVAL $1
+          WHERE o.status = 'completed' AND o.created_at >= NOW() - $1::interval
           GROUP BY c.name
           ORDER BY value DESC
         `, [interval]),
@@ -168,7 +168,7 @@ class AdminController {
             EXTRACT(HOUR FROM created_at)::int AS hour,
             COUNT(id)::int AS count
           FROM orders
-          WHERE created_at >= NOW() - INTERVAL $1
+          WHERE created_at >= NOW() - $1::interval
           GROUP BY hour
           ORDER BY hour ASC
         `, [interval])
@@ -323,10 +323,12 @@ class AdminController {
       const result = await pool.query(`
         SELECT
           t.*,
-          COUNT(o.id) FILTER (WHERE o.status NOT IN ('completed'))::int AS active_orders,
+          COUNT(DISTINCT o.id) FILTER (WHERE o.status NOT IN ('completed'))::int AS active_orders,
+          COUNT(DISTINCT s.id) FILTER (WHERE COALESCE(s.is_closed, false) = false AND (s.expires_at IS NULL OR s.expires_at > NOW()))::int AS active_sessions,
           MAX(o.created_at) AS last_order_at
         FROM tables t
         LEFT JOIN orders o ON o.table_id = t.id
+        LEFT JOIN sessions s ON s.table_id = t.id
         GROUP BY t.id
         ORDER BY t.table_number
       `);
@@ -394,6 +396,71 @@ class AdminController {
     try {
       const result = await pool.query('SELECT id, full_name, email, role, created_at FROM users ORDER BY role, full_name');
       res.json({ success: true, data: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * POST /api/admin/users
+   * Créer un nouvel utilisateur (staff/admin)
+   */
+  async createUser(req, res, next) {
+    try {
+      const AuthService = require('../services/AuthService');
+      const user = await AuthService.register(req.body);
+      res.status(201).json({ success: true, data: user, message: 'User created successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * PATCH /api/admin/users/:id
+   * Mettre à jour un utilisateur
+   */
+  async updateUser(req, res, next) {
+    try {
+      const AuthService = require('../services/AuthService');
+      const userId = parseInt(req.params.id, 10);
+      const { full_name, email, password, role } = req.body;
+
+      const updates = {};
+      if (full_name !== undefined) updates.full_name = full_name;
+      if (email !== undefined) updates.email = email;
+      if (role !== undefined) updates.role = role;
+      if (password) updates.password_hash = await AuthService.hashPassword(password);
+
+      const UserModel = require('../models/UserModel');
+      const updated = await UserModel.update(userId, updates);
+
+      if (!updated) {
+        const ApiError = require('../utils/apiError');
+        throw ApiError.notFound('User not found');
+      }
+
+      const { password_hash, security_answer, ...user } = updated;
+      res.json({ success: true, data: user, message: 'User updated successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * DELETE /api/admin/users/:id
+   * Supprimer un utilisateur
+   */
+  async deleteUser(req, res, next) {
+    try {
+      const userId = parseInt(req.params.id, 10);
+      const result = await pool.query('DELETE FROM users WHERE id = $1 AND role != $2 RETURNING id, full_name', [userId, 'client']);
+
+      if (result.rows.length === 0) {
+        const ApiError = require('../utils/apiError');
+        throw ApiError.notFound('User not found or cannot delete client users');
+      }
+
+      res.json({ success: true, data: result.rows[0], message: 'User deleted successfully' });
     } catch (err) {
       next(err);
     }

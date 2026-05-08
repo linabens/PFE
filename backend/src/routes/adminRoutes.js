@@ -33,6 +33,9 @@ router.get('/loyalty',          LoyaltyController.listAll);
 
 // ── User Management (admin focus) ─────────────────────────────────────────────
 router.get('/users',            AdminController.listUsers);
+router.post('/users',           AdminController.createUser);
+router.patch('/users/:id',      AdminController.updateUser);
+router.delete('/users/:id',     AdminController.deleteUser);
 
 // ── News Management (admin only) ──────────────────────────────────────────────
 router.post('/news/refresh',    NewsController.refreshCache);

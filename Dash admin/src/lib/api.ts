@@ -1,4 +1,7 @@
-const BASE_URL = 'http://localhost:3000/api';
+// Relative URL — Vite proxies /api → http://localhost:3000 in dev.
+// In production, serve the frontend from the same origin as the backend,
+// or set VITE_API_URL to override (e.g. http://your-server:3000/api).
+const BASE_URL = (import.meta.env.VITE_API_URL as string) || '/api';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -34,8 +37,14 @@ async function apiRequest<T>(endpoint: string, options: RequestOptions = {}): Pr
     window.location.href = '/login';
     throw new Error('Unauthorized');
   }
+  
 
-  const result = await response.json();
+  let result;
+  try {
+    result = await response.json();
+  } catch (e) {
+    throw new Error(`Server returned invalid JSON: ${response.statusText || response.status}`);
+  }
 
   if (!response.ok || !result.success) {
     const errorMsg = result.message || result.error || response.statusText || 'Unknown Connection Error';

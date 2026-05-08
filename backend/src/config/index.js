@@ -31,4 +31,7 @@ module.exports = {
 
   // Logging
   logLevel: process.env.LOG_LEVEL || 'info',
+
+  // Gemini AI (embeddings + LLM for RAG chatbot)
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
 };

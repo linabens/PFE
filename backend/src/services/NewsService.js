@@ -3,7 +3,12 @@ const Parser = require('rss-parser');
 // RSS feeds per category
 const FEEDS = {
   general:    ['https://www.aljazeera.net/aljazeerarss/all/rss.xml'],
-  sports:     ['https://www.aljazeera.net/aljazeerarss/sports/rss.xml'],
+  // sports: prioritize reliable international sports feeds
+  sports:     [
+    'https://www.skysports.com/rss/12040',        // Sky Sports (International)
+    'https://fr.hespress.com/sport/feed',         // Hespress Sport (Regional/French)
+    'https://www.aljazeera.net/aljazeerarss/sports/rss.xml' // Al Jazeera Sports
+  ],
   technology: ['https://www.aljazeera.net/aljazeerarss/technology/rss.xml'],
 };
 

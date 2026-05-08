@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/lib/utils';
-import { QrCode, Plus, Users, Eye, RefreshCw, X, Trash2, Loader2 } from 'lucide-react';
+import { QrCode, Plus, Users, Eye, RefreshCw, X, Trash2, Loader2, Unlock } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -11,8 +11,14 @@ const stagger = {
   item: { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } },
 };
 
+// Builds the URL that gets encoded into the physical QR code on each table.
+// The mobile app scans this URL, extracts the qr_code token, and calls
+// GET /api/sessions/scan/:qr_code to create a session.
+const buildScanUrl = (qrCode: string) =>
+  `http://${window.location.hostname}:3000/api/sessions/scan/${qrCode}`;
+
 export default function TablesPage() {
-  const { tables, addTable, deleteTable, fetchTables, loading } = useAppStore();
+  const { tables, addTable, deleteTable, fetchTables, loading, freeTable } = useAppStore();
 
   useEffect(() => {
     fetchTables();
@@ -47,6 +53,16 @@ export default function TablesPage() {
       toast.success(`Table ${number} deleted`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete table');
+    }
+  };
+
+  const handleFreeTable = async (id: string, number: number) => {
+    if (!confirm(`Voulez-vous vraiment libérer la Table ${number} ? Cela fermera toutes les sessions client actives pour cette table.`)) return;
+    try {
+      await freeTable(id);
+      toast.success(`Table ${number} libérée avec succès.`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to free table');
     }
   };
 
@@ -134,10 +150,10 @@ export default function TablesPage() {
                 </span>
               </div>
 
-              {/* Micro QR preview */}
+              {/* Micro QR preview — encodes the actual backend scan URL */}
               <div className="w-full aspect-square max-w-[120px] mx-auto mb-4 p-2 bg-foreground rounded-lg flex items-center justify-center">
                 <QRCode
-                  value={`https://coffeetime.app/table/${table.number}`}
+                  value={table.qrCode ? buildScanUrl(table.qrCode) : `table-${table.number}`}
                   size={104}
                   level="M"
                 />
@@ -156,7 +172,15 @@ export default function TablesPage() {
                 >
                   <Eye className="w-3 h-3" /> View QR
                 </button>
-                <button className="h-8 px-3 rounded-md bg-secondary hover:bg-secondary/80 text-xs text-foreground flex items-center justify-center gap-1 transition-colors">
+                {table.status !== 'free' && (
+                  <button 
+                    onClick={() => handleFreeTable(table.id, table.number)}
+                    className="flex-1 h-8 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs flex items-center justify-center gap-1 transition-colors font-medium border border-primary/20"
+                  >
+                    <Unlock className="w-3 h-3" /> Libérer
+                  </button>
+                )}
+                <button onClick={fetchTables} className="h-8 px-3 rounded-md bg-secondary hover:bg-secondary/80 text-xs text-foreground flex items-center justify-center gap-1 transition-colors">
                   <RefreshCw className="w-3 h-3" />
                 </button>
               </div>

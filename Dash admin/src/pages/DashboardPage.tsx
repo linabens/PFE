@@ -56,14 +56,18 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { orders, assistanceRequests, fetchDashboardStats, fetchDashboardSummary, advanceOrderStatus, handleAssistance, tables, dashboardStats, loading, error, fetchInitialData } = useAppStore();
+  const { orders, assistanceRequests, fetchDashboardStats, fetchDashboardSummary, advanceOrderStatus, handleAssistance, tables, dashboardStats, loading, error, fetchInitialData, user } = useAppStore();
   const [period, setPeriod] = useState<'today' | 'week' | 'month'>('today');
-  const lastAssistanceCount = useRef(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lastAssistanceCount = useRef(0)
+  const lastOrderCount = useRef(0)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const orderAudioRef = useRef<HTMLAudioElement | null>(null)
 
   // ✅ All hooks must come BEFORE any conditional returns
   // Polling for live data
   useEffect(() => {
+    if (!user) return; // Only poll if logged in
+    
     const interval = setInterval(() => {
       fetchDashboardStats().catch(console.error);
     }, 30000); // Poll every 30s
@@ -86,6 +90,20 @@ export default function DashboardPage() {
     }
     lastAssistanceCount.current = assistanceRequests.length;
   }, [assistanceRequests.length]);
+
+  // Play alert if new order arrives
+  useEffect(() => {
+    if (orders.length > lastOrderCount.current && lastOrderCount.current !== 0) {
+      orderAudioRef.current?.play().catch(() => { });
+      import('react-hot-toast').then(({ toast }) => {
+        toast.success('New order received! ☕', {
+          duration: 4000,
+          icon: '🛎️',
+        });
+      });
+    }
+    lastOrderCount.current = orders.length;
+  }, [orders.length]);
 
   // Conditional returns AFTER all hooks
   if (error) {
@@ -144,6 +162,8 @@ export default function DashboardPage() {
     quantity: p.qty_sold,
     pct: Math.min(100, (p.qty_sold / (dashboardStats.today.total_orders || 1)) * 100)
   }));
+
+  const inventoryAlerts = useAppStore.getState().products.filter(p => p.stockQuantity <= p.minStockLevel);
 
   return (
     <motion.div variants={stagger.container} initial="initial" animate="animate" className="space-y-6">
@@ -452,6 +472,41 @@ export default function DashboardPage() {
         </motion.div>
       </div>
       <audio ref={audioRef} src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" />
+      <audio ref={orderAudioRef} src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto" />
+
+      {/* Inventory Alerts Overlay/Modal if any */}
+      {inventoryAlerts.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="fixed bottom-6 right-6 z-50 max-w-xs w-full glass-card border-warning/30 p-4 shadow-2xl overflow-hidden"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold text-warning uppercase tracking-widest flex items-center gap-2">
+              <Zap className="w-3 h-3 animate-pulse" /> Inventory Alerts
+            </h4>
+            <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded-full font-bold">
+              {inventoryAlerts.length}
+            </span>
+          </div>
+          <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+            {inventoryAlerts.map(p => (
+              <div key={p.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-warning/10 border border-warning/5">
+                <span className="text-xs text-foreground truncate flex-1">{p.name}</span>
+                <span className="text-[10px] font-mono font-bold text-destructive">
+                  {p.stockQuantity} left
+                </span>
+              </div>
+            ))}
+          </div>
+          <button 
+            onClick={() => navigate('/products')}
+            className="mt-3 w-full py-1.5 rounded-lg bg-warning/20 hover:bg-warning/30 text-warning text-[10px] font-bold transition-all"
+          >
+            RESTOCK NOW
+          </button>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

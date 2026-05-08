@@ -4,11 +4,33 @@ const config = require('./config');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Allow requests from the Vite dev server (any localhost port) and the
+// mobile app's bundler origin. In production, lock this down to your domain.
+const ALLOWED_ORIGINS = [
+  /^http:\/\/localhost(:\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,  // LAN IPs for mobile dev
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    const allowed = ALLOWED_ORIGINS.some((pattern) => pattern.test(origin));
+    callback(allowed ? null : new Error(`CORS blocked: ${origin}`), allowed);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-session-token'],
+}));
 app.use(express.json());
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  const start = Date.now();
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Started`);
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Finished (${res.statusCode}) - ${duration}ms`);
+  });
   next();
 });
 
@@ -35,12 +57,15 @@ const adminRoutes = require('./routes/adminRoutes');
 const loyaltyRoutes = require('./routes/loyaltyRoutes');
 const tableRoutes = require('./routes/tableRoutes');
 const promotionRoutes = require('./routes/promotionRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes); // public session endpoints
 app.use('/api/news', newsRoutes);
 app.use('/api/entertainment', entertainmentRoutes);
 app.use('/api/admin', adminRoutes);
+
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -50,8 +75,6 @@ app.use('/api/games', gameRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/promotions', promotionRoutes);
-
-const chatRoutes = require('./routes/chatRoutes');
 app.use('/api/chat', chatRoutes);
 
 // Gestion des erreurs

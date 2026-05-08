@@ -13,17 +13,18 @@ const columns: { status: OrderStatus; label: string; color: string }[] = [
 ];
 
 export default function LiveOrdersPage() {
-  const { orders, advanceOrderStatus, fetchOrders } = useAppStore();
+  const { orders, advanceOrderStatus, fetchOrders, user } = useAppStore();
   const [, setTick] = useState(0);
 
-  // Auto refresh — re-fetch orders from backend every 15s
   useEffect(() => {
+    if (!user) return; // Only poll if logged in
+
     fetchOrders().catch(console.error); // Fetch immediately on mount
     
     const i = setInterval(() => {
       setTick((t) => t + 1);
       fetchOrders().catch(console.error);
-    }, 10000);
+    }, 20000); // Poll every 20s
     return () => clearInterval(i);
   }, [fetchOrders]);
 
@@ -31,7 +32,7 @@ export default function LiveOrdersPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <span className="w-2 h-2 rounded-full bg-success animate-pulse-dot" />
-        <span className="text-xs text-muted-foreground">Auto-refreshing every 10s</span>
+        <span className="text-xs text-muted-foreground">Auto-refreshing every 20s</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

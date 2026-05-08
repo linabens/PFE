@@ -15,7 +15,9 @@ export default function ProductsPage() {
     name: '', 
     description: '', 
     price: '', 
-    categoryId: 0
+    categoryId: 1,
+    stockQuantity: '50',
+    minStockLevel: '10'
   });
 
   // Fetch on mount
@@ -45,9 +47,11 @@ export default function ProductsPage() {
         active: true,
         trending: false,
         seasonal: false,
+        stockQuantity: parseInt(newProduct.stockQuantity),
+        minStockLevel: parseInt(newProduct.minStockLevel)
       });
       toast.success('Product added successfully');
-      setNewProduct({ name: '', description: '', price: '', categoryId: 1 });
+      setNewProduct({ name: '', description: '', price: '', categoryId: 1, stockQuantity: '50', minStockLevel: '10' });
       setShowPanel(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to add product');
@@ -140,6 +144,30 @@ export default function ProductsPage() {
                   </div>
                   <span className="font-display text-primary text-xl font-medium whitespace-nowrap">{product.price} TND</span>
                 </div>
+                
+                {/* Stock indicator */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-muted-foreground uppercase tracking-wider font-bold">Inventory</span>
+                    <span className={cn(
+                      "font-mono font-bold px-1.5 py-0.5 rounded",
+                      product.stockQuantity <= product.minStockLevel ? "bg-destructive/20 text-destructive animate-pulse" : "bg-success/20 text-success"
+                    )}>
+                      {product.stockQuantity} in stock
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-secondary/50 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, (product.stockQuantity / (product.minStockLevel * 4)) * 100)}%` }}
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        product.stockQuantity <= product.minStockLevel ? "bg-destructive" : "bg-success"
+                      )}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] px-2.5 py-1 rounded-full bg-latte/40 text-espresso/60 font-medium">{product.category}</span>
                   {product.trending && <span className="text-[10px] px-2.5 py-1 rounded-full bg-primary/10 text-primary font-bold">TRENDING</span>}
@@ -241,6 +269,26 @@ export default function ProductsPage() {
                   >
                     {storeCategories.filter((c) => c.id !== 0).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1.5 block">Initial Stock</label>
+                    <input
+                      type="number"
+                      value={newProduct.stockQuantity}
+                      onChange={(e) => setNewProduct({ ...newProduct, stockQuantity: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1.5 block">Min Level (Alert)</label>
+                    <input
+                      type="number"
+                      value={newProduct.minStockLevel}
+                      onChange={(e) => setNewProduct({ ...newProduct, minStockLevel: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                    />
+                  </div>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }}

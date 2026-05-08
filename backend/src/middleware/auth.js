@@ -8,13 +8,6 @@ const UserModel = require('../models/UserModel');
  */
 async function authenticateToken(req, res, next) {
   try {
-    const chatbotKey = req.headers['x-chatbot-key'];
-    if (chatbotKey && chatbotKey === process.env.CHATBOT_SECRET) {
-      // Internal chatbot bypass - mock as an admin
-      req.user = { id: 0, role: 'admin', full_name: 'Chatbot Internal' };
-      return next();
-    }
-
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       throw ApiError.unauthorized('Authorization header missing');

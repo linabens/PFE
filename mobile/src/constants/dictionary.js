@@ -1,0 +1,2 @@
+export const DICTIONARY = new Set(["CAFE","ESPRESSO","MOCHA","LATTE","BARISTA","TASSE","GRAIN","AROMA","MATIN","SUCRE","LAIT","CREMA","NOIR"]);
+export const isValidWord = (w) => DICTIONARY.has(w.toUpperCase());

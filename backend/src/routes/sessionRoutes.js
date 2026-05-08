@@ -13,19 +13,47 @@ const { verifyQrScanSignature } = require('../utils/qrSession');
  */
 router.post('/', async (req, res, next) => {
   try {
-    const { table_id } = req.body;
-    
+    const { table_id, table_number: reqTableNumber } = req.body;
+    let parsedTableId = table_id ? parseInt(table_id) : null;
+    let table_number = null;
+
+    const TableModel = require('../models/TableModel');
+
+    if (reqTableNumber && !parsedTableId) {
+      // Resolve table_number → actual DB id
+      try {
+        const table = await TableModel.findByNumber(parseInt(reqTableNumber));
+        if (table) {
+          parsedTableId = table.id;
+          table_number = table.table_number;
+        } else {
+          return res.status(404).json({ success: false, error: `Table ${reqTableNumber} introuvable.` });
+        }
+      } catch {
+        return res.status(404).json({ success: false, error: `Table ${reqTableNumber} introuvable.` });
+      }
+    }
+
     // Create anonymous session
-    const session = await SessionModel.create(
-      table_id ? parseInt(table_id) : null
-    );
-    
-    res.status(200).json({ 
-      success: true, 
+    const session = await SessionModel.create(parsedTableId);
+
+    // If table_number not yet set, fetch it from the DB id
+    if (parsedTableId && !table_number) {
+      try {
+        const table = await TableModel.findById(parsedTableId);
+        table_number = table?.table_number ?? parsedTableId;
+      } catch {
+        table_number = parsedTableId;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
       data: {
         id: session.id,
         token: session.token,
         table_id: session.table_id,
+        table_number,
         expires_at: session.expires_at,
         message: 'Session créée avec succès. Bienvenue!'
       }
@@ -57,6 +85,7 @@ router.get('/scan/:qr_code(*)', async (req, res, next) => {
 
     // Find the table by its QR code
     const TableModel = require('../models/TableModel');
+    console.log(`[SessionRoute] Scan QR: attempting to find table with qr_code = "${qr_code}"`);
     const table = await TableModel.findByQrCode(qr_code);
 
     if (!table) {

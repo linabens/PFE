@@ -1,141 +1,186 @@
-const fs = require('fs');
-const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const pool = require('../database/pool');
+const SessionModel = require('../models/SessionModel');
+const ragService = require('../services/RagService');
 
-// Initialisation de Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const sessionModel = SessionModel; // exported as singleton instance
 
-/**
- * Charge les fichiers de données pour le contexte RAG
- */
-const loadContext = () => {
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+async function resolveSession(req, res) {
+  const token = req.headers['x-session-token'] || req.body.session_token;
+  if (!token) {
+    res.status(401).json({ success: false, error: 'x-session-token header is required' });
+    return null;
+  }
+  const session = await sessionModel.findByToken(token);
+  const v = sessionModel.validateSessionRow(session);
+  if (!v.ok) {
+    res.status(401).json({ success: false, error: 'Session invalide ou expirée. Rescannez le QR code.' });
+    return null;
+  }
+  // Refresh last_active_at
+  await pool.query(`UPDATE sessions SET last_active_at = NOW() WHERE id = $1`, [session.id]);
+  return session;
+}
+
+async function loadHistory(sessionId, limit = 12) {
+  const res = await pool.query(
+    `SELECT role, content FROM chat_messages
+     WHERE session_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [sessionId, limit]
+  );
+  return res.rows.reverse(); // chronological order
+}
+
+async function loadPreferences(sessionId) {
+  const res = await pool.query(
+    `SELECT * FROM chat_preferences WHERE session_id = $1`,
+    [sessionId]
+  );
+  return res.rows[0] || {};
+}
+
+async function saveMessages(sessionId, userMsg, assistantMsg, sources, confidence, response_ms) {
+  await pool.query(
+    `INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'user', $2)`,
+    [sessionId, userMsg]
+  );
+  await pool.query(
+    `INSERT INTO chat_messages (session_id, role, content, sources, confidence, response_ms)
+     VALUES ($1, 'assistant', $2, $3, $4, $5)`,
+    [sessionId, assistantMsg, JSON.stringify(sources), confidence, response_ms]
+  );
+}
+
+// ─── POST /api/chat/message ──────────────────────────────────────────────────
+
+exports.sendMessage = async (req, res, next) => {
   try {
-    const dataDir = path.join(__dirname, '../../Data');
-    const menu = fs.readFileSync(path.join(dataDir, 'menu.txt'), 'utf8');
-    const promotions = fs.readFileSync(path.join(dataDir, 'promotion.txt'), 'utf8');
-    const faq = fs.readFileSync(path.join(dataDir, 'faq.txt'), 'utf8');
-    
-    return `
-CONTEXTE BOUTIQUE BREWLUNA:
---- MENU ---
-${menu}
+    const session = await resolveSession(req, res);
+    if (!session) return;
 
---- PROMOTIONS ET FIDÉLITÉ ---
-${promotions}
+    const { message } = req.body;
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ success: false, error: 'message is required' });
+    }
 
---- FAQ / INFOS PRATIQUES ---
-${faq}
-`;
-  } catch (error) {
-    console.error('[ChatController] Erreur chargement contexte:', error);
-    return 'Désolé, les informations de la boutique ne sont pas disponibles actuellement.';
+    const [history, preferences] = await Promise.all([
+      loadHistory(session.id),
+      loadPreferences(session.id),
+    ]);
+
+    const result = await ragService.query({
+      message: message.trim(),
+      history,
+      preferences,
+    });
+
+    await saveMessages(
+      session.id,
+      message.trim(),
+      result.response,
+      result.sources,
+      result.confidence,
+      result.response_ms
+    );
+
+    res.json({
+      success: true,
+      data: {
+        response:      result.response,
+        sources:       result.sources,
+        confidence:    result.confidence,
+        low_confidence: result.low_confidence,
+        response_ms:   result.response_ms,
+      },
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-/**
- * POST /api/chat
- */
-exports.chat = async (req, res, next) => {
+// ─── GET /api/chat/history ───────────────────────────────────────────────────
+
+exports.getHistory = async (req, res, next) => {
   try {
-    const { message, tableId, cartItems, currentOrder, loyaltyPoints, history } = req.body;
+    const session = await resolveSession(req, res);
+    if (!session) return;
 
-    if (!message) {
-      return res.status(400).json({ success: false, error: 'Message requis' });
-    }
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const result = await pool.query(
+      `SELECT id, role, content, sources, confidence, response_ms, created_at
+       FROM chat_messages
+       WHERE session_id = $1
+       ORDER BY created_at ASC
+       LIMIT $2`,
+      [session.id, limit]
+    );
 
-    console.log('[ChatController] Message reçu:', message);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    // Préparation du contexte dynamique de l'utilisateur
-    const userContext = `
-INFOS UTILISATEUR ACTUEL:
-- Table: ${tableId || 'Non assignée'}
-- Panier actuel: ${JSON.stringify(cartItems || [])}
-- Commande en cours: ${currentOrder || 'Aucune'}
-- Points de fidélité: ${loyaltyPoints || 0}
-`;
+// ─── DELETE /api/chat/history ────────────────────────────────────────────────
 
-    const systemPrompt = `
-Tu es Luna ☽, l'assistante virtuelle de BrewLuna.
-Tu es polie, chaleureuse et efficace. Ton but est d'aider les clients.
+exports.clearHistory = async (req, res, next) => {
+  try {
+    const session = await resolveSession(req, res);
+    if (!session) return;
 
-CONSIGNES:
-1. Utilise UNIQUEMENT les informations du contexte fourni pour répondre.
-2. Si tu ne connais pas la réponse, dis-le poliment et suggère de demander au staff.
-3. Réponds de manière concise.
-4. N'invente jamais de prix ou de promotions non listés.
-5. Si un client demande ses points, utilise les infos de "INFOS UTILISATEUR ACTUEL".
-6. Réponds TOUJOURS dans la langue utilisée par l'utilisateur (Français, Anglais ou Arabe Tunisien/Standard).
-7. Propose toujours 2 ou 3 suggestions de réponses courtes (quickReplies) à la fin de ta réponse sous format JSON.
+    await pool.query(`DELETE FROM chat_messages WHERE session_id = $1`, [session.id]);
+    res.json({ success: true, message: 'Conversation cleared.' });
+  } catch (err) {
+    next(err);
+  }
+};
 
-Structure de la réponse attendue (JSON):
-{
-  "reply": "Ta réponse ici...",
-  "quickReplies": ["Suggestion 1", "Suggestion 2"]
-}
+// ─── PUT /api/chat/preferences ───────────────────────────────────────────────
 
-CONTEXTE DE RÉFÉRENCE:
-${loadContext()}
-${userContext}
-`;
+exports.updatePreferences = async (req, res, next) => {
+  try {
+    const session = await resolveSession(req, res);
+    if (!session) return;
 
-    console.log('[ChatController] Appel à Gemini (gemini-2.5-flash)...');
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const { milk_type, budget_limit, dietary_tags, language } = req.body;
 
-    // Préparation de l'historique pour Gemini
-    let chatHistory = (history || []).map(h => ({
-      role: h.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: h.content }],
-    }));
+    await pool.query(
+      `INSERT INTO chat_preferences (session_id, milk_type, budget_limit, dietary_tags, language, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (session_id) DO UPDATE
+         SET milk_type    = EXCLUDED.milk_type,
+             budget_limit = EXCLUDED.budget_limit,
+             dietary_tags = EXCLUDED.dietary_tags,
+             language     = EXCLUDED.language,
+             updated_at   = NOW()`,
+      [
+        session.id,
+        milk_type   || null,
+        budget_limit || null,
+        dietary_tags?.length ? dietary_tags : null,
+        language    || 'fr',
+      ]
+    );
 
-    // Gemini exige que l'historique commence par un message 'user'
-    const firstUserIndex = chatHistory.findIndex(h => h.role === 'user');
-    if (firstUserIndex !== -1) {
-      chatHistory = chatHistory.slice(firstUserIndex);
-    } else {
-      chatHistory = []; // Si aucun message user, on vide pour éviter l'erreur
-    }
+    res.json({ success: true, message: 'Preferences updated.' });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    const chatSession = model.startChat({
-      history: chatHistory,
-      generationConfig: {
-        maxOutputTokens: 800,
-        responseMimeType: "application/json",
-      },
-    });
+// ─── GET /api/chat/preferences ───────────────────────────────────────────────
 
-    const fullMessage = `SYSTEM INSTRUCTION: ${systemPrompt}\n\nUSER QUESTION: ${message}`;
-    
-    const result = await chatSession.sendMessage(fullMessage);
-    const responseText = result.response.text();
-    console.log('[ChatController] Réponse Gemini reçue');
-    
-    let responseData;
-    try {
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      responseData = {
-        reply: responseText,
-        quickReplies: ["Menu ☕", "Promotions 🏷️", "Aide ❓"]
-      };
-    }
+exports.getPreferences = async (req, res, next) => {
+  try {
+    const session = await resolveSession(req, res);
+    if (!session) return;
 
-    res.json({
-      ...responseData,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('[ChatController] Error:', error);
-    
-    let userFriendlyMessage = "Je rencontre un problème technique. Réessayez dans quelques instants. 🙏";
-    if (error.message.includes('fetch failed')) {
-      userFriendlyMessage = "Désolé, je n'arrive pas à contacter mes serveurs. Vérifiez la connexion internet du serveur BrewLuna. 🌐";
-    }
-
-    res.status(500).json({
-      reply: userFriendlyMessage,
-      quickReplies: ["Réessayer"],
-      timestamp: new Date().toISOString()
-    });
+    const prefs = await loadPreferences(session.id);
+    res.json({ success: true, data: prefs });
+  } catch (err) {
+    next(err);
   }
 };

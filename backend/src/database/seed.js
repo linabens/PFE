@@ -20,11 +20,19 @@ async function seed() {
     const staffPasswordHash = await bcrypt.hash('staff123', 10);
     
     await client.query(`
-      INSERT INTO users (full_name, email, password_hash, role)
+      INSERT INTO users (full_name, email, password_hash, role, security_question, security_answer, avatar)
       VALUES 
-        ('Admin User', 'admin@coffee.com', $1, 'admin'),
-        ('Staff User', 'staff@coffee.com', $2, 'staff')
-      ON CONFLICT (email) DO NOTHING
+        ('Admin User', 'admin@coffee.com', $1, 'admin', 'Your favorite coffee blend?', 'Espresso', '☕'),
+        ('Staff User', 'staff@coffee.com', $2, 'staff', 'First coffee shop you worked at?', 'Central Perk', '🍪'),
+        ('Lina Ben Admin', 'lina.admin@coffee.com', $1, 'admin', 'Your barista nickname?', 'The Boss', '👑'),
+        ('Lina Ben Barista', 'lina.barista@coffee.com', $2, 'staff', 'City where you learned to make coffee?', 'Tunis', '🧋')
+      ON CONFLICT (email) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        password_hash = EXCLUDED.password_hash,
+        role = EXCLUDED.role,
+        security_question = EXCLUDED.security_question,
+        security_answer = EXCLUDED.security_answer,
+        avatar = EXCLUDED.avatar
     `, [adminPasswordHash, staffPasswordHash]);
 
     // =====================================================
@@ -47,12 +55,12 @@ async function seed() {
     // =====================================================
     console.log('📁 Création des catégories raffinées...');
     const categories = [
-      { name: 'Signature Brews', type: 'drink', order: 1 },
-      { name: 'Iced Refreshers', type: 'drink', order: 2 },
-      { name: 'Artisan Tea', type: 'drink', order: 3 },
-      { name: 'Morning Pastries', type: 'dessert', order: 4 },
-      { name: 'Gourmette Cakes', type: 'dessert', order: 5 },
-      { name: 'Savoury Bites', type: 'dessert', order: 6 },
+      { name: 'Signature Brews', type: 'coffee', order: 1 },
+      { name: 'Iced Refreshers', type: 'cold', order: 2 },
+      { name: 'Artisan Tea', type: 'coffee', order: 3 },
+      { name: 'Morning Pastries', type: 'food', order: 4 },
+      { name: 'Gourmette Cakes', type: 'special', order: 5 },
+      { name: 'Savoury Bites', type: 'food', order: 6 },
     ];
 
     const categoryMap = {};

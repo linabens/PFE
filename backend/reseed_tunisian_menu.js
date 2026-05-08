@@ -1,76 +1,84 @@
-require('dotenv').config();
 const pool = require('./src/database/pool');
-
-const categories = [
-  { name: 'Cafés Chauds', type: 'drink' },
-  { name: 'Cafés Glacés', type: 'drink' },
-  { name: 'Frappuccinos', type: 'drink' },
-  { name: 'Smoothies & Jus', type: 'drink' },
-  { name: 'Matcha & Latté', type: 'drink' },
-  { name: 'Pâtisseries', type: 'dessert' }
-];
-
-const products = [
-  // Cafés Chauds
-  { category: 'Cafés Chauds', name: 'Espresso Ristretto', price: 2.500, desc: 'Un espresso court et intense, l’essence même du café.', trending: true, seasonal: false, img: 'https://images.unsplash.com/photo-1510707577719-af7c183f1e59?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Cafés Chauds', name: 'Capucin', price: 2.800, desc: 'Le grand classique : espresso avec une touche de lait mousseux onctueux.', trending: true, seasonal: false, img: 'https://images.unsplash.com/photo-1534706936160-d5ee67737249?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Cafés Chauds', name: 'Café Direct', price: 3.200, desc: 'Allongé avec du lait chaud, idéal pour bien commencer la journée.', trending: false, seasonal: false, img: 'https://images.unsplash.com/photo-1541167760496-162955ed8a9f?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Cafés Chauds', name: 'Americano', price: 4.500, desc: 'Espresso pur allongé à l’eau chaude pour une saveur équilibrée.', trending: false, seasonal: false, img: 'https://images.unsplash.com/photo-1551033406-611cf9a28f67?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Cafés Chauds', name: 'Cappuccino Italien', price: 5.500, desc: 'Espresso, lait chaud et mousse de lait épaisse saupoudré de cacao.', trending: false, seasonal: false, img: 'https://images.unsplash.com/photo-1575916140220-b38871bd8d58?auto=format&fit=crop&q=80&w=800' },
-  
-  // Cafés Glacés
-  { category: 'Cafés Glacés', name: 'Iced Vanilla Latte', price: 7.500, desc: 'Mélange rafraîchissant d’espresso, lait frais et sirop de vanille.', trending: true, seasonal: false, img: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Cafés Glacés', name: 'Signature Cold Brew', price: 8.000, desc: 'Infusé à froid pendant 16h pour une douceur naturelle sans amertume.', trending: false, seasonal: true, img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&q=80&w=800' },
-  
-  // Frappuccinos
-  { category: 'Frappuccinos', name: 'Caramel Macchiato Frappé', price: 9.500, desc: 'Café mixé avec glace, chantilly généreuse et coulis de caramel.', trending: true, seasonal: false, img: 'https://images.unsplash.com/photo-1471357674240-e1a485acb3e1?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Frappuccinos', name: 'Oreo Dream Frappé', price: 10.500, desc: 'Gourmandise absolue aux biscuits Oreo, chocolat et crème chantilly.', trending: true, seasonal: false, img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&q=80&w=800' },
-
-  // Smoothies & Jus
-  { category: 'Smoothies & Jus', name: 'Citronnade Fraîche', price: 5.500, desc: 'Citrons pressés, menthe fraîche et une touche de sucre.', trending: true, seasonal: true, img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Smoothies & Jus', name: 'Mango Sunshine', price: 8.500, desc: 'Smoothie à la mangue fraîche pour une explosion de saveurs fruitées.', trending: false, seasonal: false, img: 'https://images.unsplash.com/photo-1550592704-6c76defa9985?auto=format&fit=crop&q=80&w=800' },
-
-  // Matcha
-  { category: 'Matcha & Latté', name: 'Matcha Latte Premium', price: 9.000, desc: 'Thé vert matcha de cérémonie préparé avec un lait onctueux.', trending: true, seasonal: false, img: 'https://images.unsplash.com/photo-1536304953466-4835025ea5b2?auto=format&fit=crop&q=80&w=800' },
-
-  // Pâtisseries
-  { category: 'Pâtisseries', name: 'Croissant au Beurre', price: 2.500, desc: 'Pâtisserie française classique, croustillante et dorée.', trending: false, seasonal: false, img: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&q=80&w=800' },
-  { category: 'Pâtisseries', name: 'Pain au Chocolat', price: 2.800, desc: 'Feuilletage pur beurre avec deux barres de chocolat noir intense.', trending: false, seasonal: false, img: 'https://images.unsplash.com/photo-1530610476181-d83430b64dcd?auto=format&fit=crop&q=80&w=800' }
-];
 
 async function reseed() {
   const client = await pool.connect();
+  
   try {
+    console.log('🧹 Nettoyage de la base de données...');
     await client.query('BEGIN');
 
-    console.log('🗑️ Cleaning old data...');
+    // Supprimer les produits et catégories existants
+    await client.query('DELETE FROM order_items');
+    await client.query('DELETE FROM orders');
     await client.query('DELETE FROM products');
     await client.query('DELETE FROM categories');
 
-    console.log('🌱 Seeding new categories...');
-    const catMap = {};
+    console.log('📁 Création des catégories Tunisiennes...');
+    const categories = [
+      { name: 'Cafés & Traditions', type: 'coffee', order: 1 },
+      { name: 'Thés & Infusions', type: 'coffee', order: 2 },
+      { name: 'Jus & Fraîcheur', type: 'cold', order: 3 },
+      { name: 'Petit Déjeuner Tunisien', type: 'food', order: 4 },
+      { name: 'Pâtisseries & Gourmandises', type: 'special', order: 5 },
+      { name: 'Snacks Salés', type: 'food', order: 6 },
+    ];
+
+    const categoryMap = {};
     for (const cat of categories) {
-      const res = await client.query(
-        'INSERT INTO categories (name, type) VALUES ($1, $2) RETURNING id',
-        [cat.name, cat.type]
-      );
-      catMap[cat.name] = res.rows[0].id;
+      const res = await client.query(`
+        INSERT INTO categories (name, type, display_order)
+        VALUES ($1, $2, $3)
+        RETURNING id, name
+      `, [cat.name, cat.type, cat.order]);
+      categoryMap[cat.name] = res.rows[0].id;
     }
 
-    console.log('☕ Seeding refreshed menu products...');
+    console.log('☕ Ajout des produits typiques...');
+    const products = [
+      // Cafés
+      { cat: 'Cafés & Traditions', name: 'Café Direct', desc: 'L\'incontournable mélange espresso et lait chaud', price: 2.800, trending: true, image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772' },
+      { cat: 'Cafés & Traditions', name: 'Café Express (Illy)', desc: 'Espresso pur et intense', price: 2.500, trending: false, image: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04' },
+      { cat: 'Cafés & Traditions', name: 'Café Turc à la Zhar', desc: 'Café traditionnel à la fleur d\'oranger', price: 3.500, trending: true, image: 'https://images.unsplash.com/photo-1599398054066-846f28917f38' },
+      { cat: 'Cafés & Traditions', name: 'Cappuccino Chantilly', desc: 'Pour les gourmands de mousse de lait', price: 4.800, trending: false, image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d' },
+
+      // Thés
+      { cat: 'Thés & Infusions', name: 'Thé aux Pignons', desc: 'Thé noir traditionnel servi avec des pignons de pin royaux', price: 6.500, trending: true, image: 'file:///C:/Users/HP/.gemini/antigravity/brain/c860ffb0-65f5-43f6-a262-b7a5493b1e5f/tunisian_mint_tea_pine_nuts_1778004073034.png' },
+      { cat: 'Thés & Infusions', name: 'Thé à la Menthe', desc: 'Thé vert infusé à la menthe fraîche', price: 2.500, trending: false, image: 'https://images.unsplash.com/photo-144933325662ef-447543818e80' },
+      { cat: 'Thés & Infusions', name: 'Thé aux Amandes', desc: 'Thé noir servi avec des amandes grillées', price: 5.500, trending: false, image: 'https://images.unsplash.com/photo-1563911302283-d2bc129e7570' },
+
+      // Jus
+      { cat: 'Jus & Fraîcheur', name: 'Citronnade Maison', desc: 'Citronnade tunisienne artisanale très rafraîchissante', price: 4.500, trending: true, image: 'file:///C:/Users/HP/.gemini/antigravity/brain/c860ffb0-65f5-43f6-a262-b7a5493b1e5f/tunisian_citronnade_fresh_1778004086402.png' },
+      { cat: 'Jus & Fraîcheur', name: 'Jus d\'Orange Frais', desc: 'Orange pur jus pressé minute', price: 5.500, trending: false, image: 'https://images.unsplash.com/photo-1622597467836-f3285f2131b7' },
+      { cat: 'Jus & Fraîcheur', name: 'Panaché Fruits', desc: 'Mélange de fruits de saison frais', price: 7.500, trending: true, image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe' },
+
+      // Petit Déjeuner
+      { cat: 'Petit Déjeuner Tunisien', name: 'Petit Déj "Sidi Bou"', desc: 'Tabouna, huile d\'olive, miel, chamia, fromage et oeuf', price: 14.500, trending: true, image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666' },
+      { cat: 'Petit Déjeuner Tunisien', name: 'Assiette Omek Houria', desc: 'Carottes écrasées traditionnelles, harissa et thon', price: 8.500, trending: false, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836' },
+
+      // Sucrés
+      { cat: 'Pâtisseries & Gourmandises', name: 'Bambalouni', desc: 'Le beignet traditionnel tunisien saupoudré de sucre', price: 2.500, trending: true, image: 'file:///C:/Users/HP/.gemini/antigravity/brain/c860ffb0-65f5-43f6-a262-b7a5493b1e5f/bambalouni_traditional_1778004106638.png' },
+      { cat: 'Pâtisseries & Gourmandises', name: 'Assidat Zgougou', desc: 'Coupe de crème de pignons de pin d\'Alep décorée', price: 8.500, trending: true, image: 'https://images.unsplash.com/photo-1571115177098-24c42de1bd0f' },
+      { cat: 'Pâtisseries & Gourmandises', name: 'Baklawa (3 pièces)', desc: 'Pâtisserie fine aux amandes et miel', price: 6.000, trending: false, image: 'https://images.unsplash.com/photo-1519915028121-7d3463d20b13' },
+
+      // Salés
+      { cat: 'Snacks Salés', name: 'Trio de Fricassés', desc: 'Mini sandwichs frits au thon, olives et harissa', price: 7.500, trending: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8' },
+      { cat: 'Snacks Salés', name: 'Brick à l\'Oeuf', desc: 'Feuille de brick croustillante, oeuf, thon et persil', price: 4.500, trending: true, image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26' },
+    ];
+
     for (const p of products) {
-      await client.query(
-        `INSERT INTO products (category_id, name, description, price, image_url, is_trending, is_seasonal, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [catMap[p.category], p.name, p.desc, p.price, p.img, p.trending, p.seasonal, true]
-      );
+      const catId = categoryMap[p.cat];
+      await client.query(`
+        INSERT INTO products (category_id, name, description, price, image_url, is_active, is_trending)
+        VALUES ($1, $2, $3, $4, $5, true, $6)
+      `, [catId, p.name, p.desc, p.price, p.image, p.trending]);
     }
 
     await client.query('COMMIT');
-    console.log('✅ Tunisia/Mix menu overhaul complete!');
-  } catch (e) {
+    console.log('✅ Menu Tunisien installé avec succès!');
+    
+  } catch (error) {
     await client.query('ROLLBACK');
-    console.error('❌ Reseed failed:', e.message);
+    console.error('❌ Erreur:', error.message);
   } finally {
     client.release();
     process.exit(0);

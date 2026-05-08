@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import AppSidebar from './AppSidebar';
 import Topbar from './Topbar';
-import ChatbotWidget from '@/components/ChatbotWidget';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,9 +43,6 @@ export default function DashboardLayout() {
           </motion.main>
         </AnimatePresence>
       </div>
-
-      {/* Floating Chatbot Widget */}
-      <ChatbotWidget />
     </div>
   );
 }
