@@ -17,11 +17,12 @@ import AnalyticsPage from "@/pages/AnalyticsPage";
 import StaffAccountsPage from "@/pages/StaffAccountsPage";
 import PromotionsPage from "@/pages/PromotionsPage";
 import ProfilePage from "@/pages/ProfilePage";
-import NotFound from "./pages/NotFound.tsx";
+import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const queryClient = new QueryClient();
 
+import "./i18n";
 import { useAppStore } from "@/stores/appStore";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -85,7 +86,6 @@ const App = () => (
               <Route path="/analytics" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
               <Route path="/promotions" element={<AdminRoute><PromotionsPage /></AdminRoute>} />
               <Route path="/staff" element={<AdminRoute><StaffAccountsPage /></AdminRoute>} />
-              <Route path="/system" element={<AdminRoute><PlaceholderPage title="System Settings" /></AdminRoute>} />
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

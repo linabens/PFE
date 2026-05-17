@@ -1,0 +1,58 @@
+@startuml DiagrammeSequenceAuthentifier
+
+title Diagramme de Séquence - S'authentifier\nSprint 1
+
+actor Utilisateur
+participant "LoginPage\n(Frontend)" as LoginPage
+participant "AuthController\n(Backend)" as AuthController
+participant "AuthService\n(Backend)" as AuthService
+database "Base de Données" as Database
+
+Utilisateur -> LoginPage: Saisit email et mot de passe
+Utilisateur -> LoginPage: Clique sur "Se connecter"
+
+LoginPage -> AuthController: POST /api/auth/login\n{email, password}
+activate AuthController
+
+AuthController -> AuthService: authenticate(email, password)
+activate AuthService
+
+AuthService -> Database: SELECT * FROM users WHERE email = ?
+activate Database
+Database --> AuthService: Résultat (utilisateur ou null)
+deactivate Database
+
+alt Email n'existe pas
+    note over AuthService
+        Utilisateur non trouvé
+    end note
+    AuthService --> AuthController: Erreur (401 Unauthorized)
+    deactivate AuthService
+    AuthController --> LoginPage: Réponse erreur (401)
+    deactivate AuthController
+    LoginPage --> Utilisateur: Affiche message d'erreur\n"Email ou mot de passe incorrect"
+else Email existe
+    AuthService -> AuthService: Vérifier: verifyPassword(passwordSaisi, passwordHash)
+
+    alt Mot de passe incorrect
+        note over AuthService
+            Comparaison échouée
+        end note
+        AuthService --> AuthController: Erreur (401 Unauthorized)
+        deactivate AuthService
+        AuthController --> LoginPage: Réponse erreur (401)
+        deactivate AuthController
+        LoginPage --> Utilisateur: Affiche message d'erreur\n"Email ou mot de passe incorrect"
+    else Mot de passe valide
+        AuthService -> AuthService: Générer JWT token\n{userId, email, role}\nAlgorithm: HMAC-SHA256\nExpiration: 24h
+        AuthService -> AuthService: Retourner: {token, user, role}
+        AuthService --> AuthController: Retour succès (200)
+        deactivate AuthService
+        AuthController --> LoginPage: Réponse succès\n{token, user: {id, email, nom}, role}
+        deactivate AuthController
+        LoginPage -> LoginPage: localStorage.setItem('authToken', token)\nlocalStorage.setItem('userRole', role)
+        LoginPage --> Utilisateur: Redirection Dashboard\n(Admin ou Staff selon role)
+    end
+end
+
+@enduml

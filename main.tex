@@ -1,0 +1,196 @@
+%% ============================================================
+%%  MAIN.TEX – PFE Coffee Time (CORRECTED)
+%%  FSM Monastir – 2025-2026
+%% ============================================================
+
+\documentclass[12pt,a4paper]{report}
+
+%% ── Encodage & langue ────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+%% ── Typographie ──────────────────────────────────────────────
+\usepackage{lmodern}
+\usepackage{microtype}
+
+%% ── Mise en page ─────────────────────────────────────────────
+\usepackage[
+  top    = 2.5cm,
+  bottom = 2.5cm,
+  left   = 3.0cm,
+  right  = 2.5cm,
+  headheight = 15pt
+]{geometry}
+
+%% ── Interligne 1.5 ──────────────────────────────────────────
+\usepackage{setspace}
+\onehalfspacing
+
+%% ── Graphiques & flottants ───────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\captionsetup{
+  font       = small,
+  labelfont  = bf,
+  labelsep   = endash,
+  justification = centering,
+  skip       = 6pt
+}
+
+%% ── Couleurs (CORRIGÉ ICI) ───────────────────────────────────
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{colortbl}
+
+% Définition de la couleur BleuFSM (Indispensable pour la ToC et les titres)
+\definecolor{BleuFSM}{RGB}{0,84,166}       
+\definecolor{BleuClair}{RGB}{235,242,255}  
+\definecolor{GrisTitre}{RGB}{80,80,80}     
+
+%% ── Tableaux ─────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{longtable}
+
+%% ── Listes ───────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=4pt, leftmargin=1.5em}
+\setlist[enumerate]{noitemsep, topsep=4pt, leftmargin=1.5em}
+
+%% ── Divers ───────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{fit,backgrounds,calc,shapes.geometric}
+\usepackage{pgfgantt}
+\usepackage{url}
+\usepackage{parskip}
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+\usepackage{emptypage}
+\usepackage{amsmath,amssymb}
+\usepackage{pifont}
+\usepackage{ragged2e}
+
+%% ── Table des matières ───────────────────────────────────────
+\usepackage{tocloft}
+
+%% ── Titres de sections ───────────────────────────────────────
+\usepackage{titlesec}
+
+%% ── Liens hypertexte ─────────────────────────────────────────
+\usepackage[
+  hidelinks,
+  pdftitle  = {Coffee Time -- Rapport PFE},
+  pdfauthor = {Lina Ben Slama}
+]{hyperref}
+
+%% ══════════════════════════════════════════════════════════════
+%%  NOMS FRANÇAIS
+%% ══════════════════════════════════════════════════════════════
+\renewcommand{\contentsname}{Table des matières}
+\renewcommand{\listfigurename}{Liste des figures}
+\renewcommand{\listtablename}{Liste des tableaux}
+\renewcommand{\chaptername}{Chapitre}
+\renewcommand{\appendixname}{Annexe}
+
+%% ══════════════════════════════════════════════════════════════
+%%  STYLE TABLE DES MATIÈRES
+%% ══════════════════════════════════════════════════════════════
+\renewcommand{\cfttoctitlefont}{\Huge\bfseries}
+\setlength{\cftaftertoctitleskip}{24pt}
+
+\renewcommand{\cftchapfont}{\bfseries\color{BleuFSM}}
+\renewcommand{\cftchappagefont}{\bfseries\color{BleuFSM}}
+\renewcommand{\cftchapleader}{\bfseries\color{BleuFSM}\cftdotfill{\cftdotsep}}
+
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\renewcommand{\cftsecleader}{\normalfont\cftdotfill{\cftdotsep}}
+
+\setlength{\cftbeforechapskip}{10pt}
+\setlength{\cftsecindent}{1.2cm}
+
+%% ══════════════════════════════════════════════════════════════
+%%  STYLE DES CHAPITRES
+%% ══════════════════════════════════════════════════════════════
+\titleformat{\chapter}[block]
+  {\normalfont\huge\bfseries\color{BleuFSM}}
+  {\MakeUppercase{\chaptername}\ \thechapter\ :}
+  {0.5em}
+  {}
+  [{\color{BleuFSM}\vspace{4pt}\hrule height 1.5pt\vspace{8pt}}]
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{BleuFSM}}
+  {\thesection}{1em}{}
+
+%% ══════════════════════════════════════════════════════════════
+%%  EN-TÊTE & PIED DE PAGE
+%% ══════════════════════════════════════════════════════════════
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\small\color{GrisTitre}\textit{\leftmark}}
+\fancyfoot[R]{\small\color{GrisTitre}Page \thepage}
+
+%% ══════════════════════════════════════════════════════════════
+\begin{document}
+
+\pagenumbering{gobble}
+\pagestyle{empty}
+
+\input{pages/page_garde}
+\cleardoublepage
+
+\input{pages/dedicaces}
+\cleardoublepage
+
+\input{pages/remerciements}
+\cleardoublepage
+
+\pagenumbering{roman}
+\pagestyle{fancy}
+
+\tableofcontents
+\cleardoublepage
+
+\listoftables
+\addcontentsline{toc}{chapter}{\listtablename}
+\cleardoublepage
+
+\listoffigures
+\addcontentsline{toc}{chapter}{\listfigurename}
+\cleardoublepage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{chapitres/introduction}
+\cleardoublepage
+
+\input{chapitres/chapitre1_corrected}
+\cleardoublepage
+
+\input{chapitres/chapitre2}
+\cleardoublepage
+
+\input{chapitres/chapitre3}
+\cleardoublepage
+
+\input{chapitres/chapitre4}
+\cleardoublepage
+
+\input{chapitres/conclusion}
+\cleardoublepage
+
+\bibliographystyle{plain}
+\bibliography{bibliographie}
+\addcontentsline{toc}{chapter}{Bibliographie}
+\cleardoublepage
+
+\appendix
+\input{pages/annexes}
+
+\end{document}

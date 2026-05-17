@@ -1,0 +1,71 @@
+@startuml DiagrammeUseCaseSprint2
+
+' --- Configuration visuelle ---
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam ArrowColor black
+skinparam ArrowThickness 1
+
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  FontColor black
+  FontSize 12
+}
+
+skinparam actor {
+  BackgroundColor white
+  BorderColor black
+  FontColor black
+  FontSize 12
+}
+
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
+}
+
+left to right direction
+
+' --- Acteurs ---
+actor "Client" as Client
+actor "Personnel" as Staff
+
+' --- Système ---
+rectangle "Sprint 2 — QR Code, Menu, Commandes" {
+
+  usecase UC1  as "Scanner le\ncode QR"
+  usecase UC1a as "Créer une session"
+  usecase UC2  as "Consulter le menu"
+  usecase UC3  as "Ajouter au panier"
+  usecase UC3a as "Calculer le\nmontant total"
+  usecase UC4  as "Confirmer la\ncommande"
+  usecase UC4a as "Suivre statut\ncommande"
+  usecase UC4b as "Gérer facture\nimprimable"
+  usecase UC5  as "Appeler serveur"
+  usecase UC6  as "Gérer les\ncommandes"
+  usecase UC7  as "Répondre aux\nassistances"
+
+  ' --- <<include>> : obligatoires ---
+  UC1  .> UC1a : <<include>>
+  UC3  .> UC3a : <<include>>
+  UC4  .> UC4a : <<include>>
+
+  ' --- <<extend>> : optionnel ---
+  ' La facture EST l'extension optionnelle de "Confirmer commande"
+  UC4b .> UC4 : <<extend>>
+}
+
+' --- Relations Client ---
+Client -- UC1
+Client -- UC2
+Client -- UC3
+Client -- UC4
+Client -- UC5
+
+' --- Relations Personnel ---
+Staff -- UC6
+Staff -- UC7
+
+@enduml

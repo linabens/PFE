@@ -25,7 +25,7 @@ class AuthController {
   async forgotPassword(req, res, next) {
     try {
       const { email } = req.body;
-      const data = await AuthService.getSecurityQuestion(email);
+      const data = await AuthService.sendResetCode(email);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -34,8 +34,8 @@ class AuthController {
 
   async verifyCode(req, res, next) {
     try {
-      const { email, code: answer } = req.body; // In this flow, "code" is the security answer
-      const { resetToken } = await AuthService.verifySecurityAnswer(email, answer);
+      const { email, code } = req.body;
+      const { resetToken } = await AuthService.verifyResetCode(email, code);
       res.json({ success: true, data: { resetToken } });
     } catch (err) {
       next(err);

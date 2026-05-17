@@ -1,0 +1,351 @@
+\chapter{Analyse et spécification des besoins}
+
+\section{Introduction}
+
+L'analyse et la spécification des besoins constituent la première étape essentielle du cycle
+de vie d'un projet. Ce chapitre vise à définir clairement la vision du projet, à identifier les
+besoins fonctionnels et non fonctionnels, ainsi que les principales fonctionnalités attendues.
+Il s'agit également de repérer les différents acteurs qui interagiront avec le système, de
+planifier les versions futures, de constituer le backlog des tâches, et enfin d'établir une
+planification initiale des phases ainsi qu'un calendrier prévisionnel de réalisation du projet.
+
+%% ----------------------------------------------------------------
+\section{Étude des besoins}
+
+Tout au long de cette section, nous allons identifier et spécifier les besoins à satisfaire, qui
+représentent les fonctionnalités à mettre en œuvre dans notre application.
+
+\subsection{Identification des acteurs}
+
+Un acteur est une représentation idéalisée d'un rôle joué par une entité externe. Il peut
+avoir le droit de consulter le système et éventuellement de le modifier. Pour notre application,
+nous avons identifié les acteurs suivants :
+
+\begin{itemize}
+    \item \textbf{Client} : utilisateur anonyme accédant via QR code depuis son smartphone,
+    sans inscription préalable.
+
+    \item \textbf{Client Fidèle} : client possédant un compte avec programme de points de fidélité.
+
+    \item \textbf{Staff} : employé du café gérant les commandes et les demandes d'assistance
+    depuis le tableau de bord.
+
+    \item \textbf{Admin} : administrateur disposant des droits complets sur le système, les
+    utilisateurs et les statistiques.
+
+    \item \textbf{Système RSS} : acteur système externe alimentant automatiquement le flux
+    d'actualités en temps réel.
+
+    \item \textbf{Système Chatbot IA} : acteur système autonome traitant les requêtes
+    conversationnelles en français, anglais et arabe, basé sur une architecture RAG
+    (\textit{Retrieval-Augmented Generation}).
+\end{itemize}
+
+%% ----------------------------------------------------------------
+\subsection{Besoins fonctionnels}
+
+Un besoin fonctionnel désigne une action spécifique que le système doit pouvoir réaliser.
+Notre solution propose un ensemble de fonctionnalités adaptées aux besoins de chaque
+type d'utilisateur.
+
+\paragraph{Client :}
+\begin{itemize}
+    \item Scanner le QR code de sa table pour créer une session anonyme
+    \item Consulter le menu des produits disponibles par catégories
+    \item Passer une commande et suivre son statut en temps réel
+    \item Appeler un serveur en cas de besoin
+    \item Interagir avec le chatbot Luna pour obtenir des informations sur le menu,
+          les promotions ou les ingrédients, en français, anglais ou arabe
+    \item Jouer à un jeu (quiz, puzzle ou mots croisés) pendant l'attente
+    \item Consulter les actualités en temps réel via flux RSS
+\end{itemize}
+
+\paragraph{Client Fidèle :}
+\begin{itemize}
+    \item Toutes les fonctionnalités du Client
+    \item Créer un compte personnel avec nom et numéro de téléphone
+    \item Accumuler des points de fidélité à chaque commande ou session de jeu
+    \item Échanger ses points contre des récompenses
+\end{itemize}
+
+\paragraph{Staff :}
+\begin{itemize}
+    \item S'authentifier pour accéder au tableau de bord
+    \item Visualiser et gérer les commandes en cours (accepter, préparer, livrer)
+    \item Répondre aux demandes d'assistance des clients
+\end{itemize}
+
+\paragraph{Admin :}
+\begin{itemize}
+    \item S'authentifier pour accéder au tableau de bord
+    \item Consulter les statistiques globales de ventes et d'activité
+    \item Gérer les produits, catégories et utilisateurs (CRUD complet)
+    \item Configurer les paramètres du système
+\end{itemize}
+
+\paragraph{Système RSS :}
+\begin{itemize}
+    \item Récupérer et mettre à jour automatiquement les actualités en temps réel
+          depuis des flux RSS externes
+\end{itemize}
+
+\paragraph{Système Chatbot IA :}
+\begin{itemize}
+    \item Comprendre les questions en langage naturel (français, anglais, arabe)
+    \item Générer un vecteur d'embedding de la requête via le modèle
+          \textit{multilingual-e5-small} (exécuté localement)
+    \item Récupérer les produits et FAQ pertinents depuis PostgreSQL par similarité cosinus
+    \item Générer des réponses personnalisées via le modèle LLaMA~3.1 (API Groq)
+    \item Détecter automatiquement la langue de l'utilisateur et adapter la réponse
+          en conséquence
+\end{itemize}
+
+%% ----------------------------------------------------------------
+\subsection{Besoins non fonctionnels}
+
+Les besoins non fonctionnels décrivent toutes les contraintes techniques, ergonomiques et
+esthétiques auxquelles le système est soumis. Le tableau~\ref{tab:non_fonctionnels} présente
+les exigences retenues pour notre système.
+
+\begin{table}[H]
+    \centering
+    \caption{Besoins non fonctionnels du système}
+    \label{tab:non_fonctionnels}
+    \begin{tabularx}{\textwidth}{|L{4cm}|X|}
+        \hline
+        \textbf{Critère} & \textbf{Exigence} \\
+        \hline
+        Intégrité &
+        Garantir la cohérence et l'intégrité des données stockées dans PostgreSQL \\
+        \hline
+        Ergonomie &
+        Interfaces conviviales, utilisation simple et intuitive pour tous les profils \\
+        \hline
+        Performance &
+        Temps de réponse API inférieur à 500~ms pour les opérations courantes \\
+        \hline
+        Rapidité &
+        Exécution des requêtes approchant le temps réel \\
+        \hline
+        Sécurité &
+        Authentification JWT, validation des entrées, protection des routes par rôle \\
+        \hline
+        Intelligence conversationnelle &
+        Réponses générées via LLaMA~3.1 (Groq), latence cible $<$~3~secondes \\
+        \hline
+        Multilinguisme &
+        Détection automatique FR/EN/AR, adaptation des réponses à la langue détectée \\
+        \hline
+        Précision contextuelle &
+        Réponses basées uniquement sur les données réelles du menu PostgreSQL \\
+        \hline
+        Scalabilité &
+        Support de 50+ conversations simultanées sans dégradation de performance \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+%% ================================================================
+\section{Planification du projet}
+
+\subsection{Backlog produit}
+
+Chaque élément du backlog est caractérisé par un identifiant unique, la fonctionnalité
+concernée, une user story décrivant le besoin de l'utilisateur, une priorité et une
+complexité estimée.
+
+\begin{table}[H]
+\centering
+\caption{Backlog produit global}
+\label{tab:backlog}
+
+\small
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{6pt}
+
+\begin{tabular}{|c|p{4cm}|p{6.5cm}|c|c|}
+\hline
+
+\textbf{ID} &
+\textbf{Fonctionnalité} &
+\textbf{User Story} &
+\textbf{Priorité} &
+\textbf{Complexité} \\
+\hline
+
+1 &
+Authentification &
+En tant que Staff ou Admin, je veux m'authentifier pour accéder au tableau de bord selon mon rôle. &
+Haute &
+Faible \\
+\hline
+
+2 &
+Session QR Code &
+En tant que Client, je veux scanner le QR code de ma table pour démarrer une session anonyme sans inscription. &
+Haute &
+Moyenne \\
+\hline
+
+3 &
+Consultation du menu &
+En tant que Client, je veux consulter les produits organisés par catégories et rechercher un article. &
+Haute &
+Moyenne \\
+\hline
+
+4 &
+Gestion du panier &
+En tant que Client, je veux ajouter des produits au panier, voir le total et confirmer ma commande. &
+Haute &
+Élevée \\
+\hline
+
+5 &
+Suivi de commande &
+En tant que Client, je veux suivre l'état de ma commande en temps réel jusqu'à sa livraison. &
+Haute &
+Moyenne \\
+\hline
+
+6 &
+Appel serveur et facture &
+En tant que Client, je veux appeler un serveur et générer une facture imprimable. &
+Moyenne &
+Faible \\
+\hline
+
+7 &
+Dashboard Admin/Staff &
+En tant qu'Admin ou Staff, je veux gérer les commandes, produits et statistiques. &
+Haute &
+Élevée \\
+\hline
+
+8 &
+Gestion des utilisateurs &
+En tant qu'Admin, je veux gérer les comptes Staff. &
+Haute &
+Faible \\
+\hline
+
+9 &
+Divertissement &
+En tant que client je veux accéder à des jeux et citations pendant l'attente. &
+Moyenne &
+Moyenne \\
+\hline
+
+10 &
+Actualités RSS &
+En tant que client je veux consulter des actualités en temps réel via RSS. &
+Moyenne &
+Faible \\
+\hline
+
+11 &
+Fidélité &
+En tant que client je veux accumuler des points et les échanger contre des récompenses. &
+Moyenne &
+Élevée \\
+\hline
+
+12 &
+Chatbot IA &
+ En tant que client je veux poser des questions au chatbot (FR/EN/AR). &
+Moyenne &
+Élevée \\
+\hline
+
+\end{tabular}
+\end{table}
+
+\subsection{Découpage des sprints}
+
+Le projet est organisé en deux releases, chacune composée de deux sprints, permettant une
+livraison incrémentale des fonctionnalités. La figure~\ref{fig:decoupage_sprints} illustre cette répartition.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    release/.style={
+        rectangle, rounded corners=4pt,
+        fill=NavyBlue!80, text=white,
+        font=\bfseries\large,
+        minimum width=1.8cm, minimum height=5.2cm,
+        align=center
+    },
+    sprint/.style={
+        rectangle, rounded corners=4pt,
+        fill=NavyBlue!60, text=white,
+        font=\bfseries,
+        minimum width=2.4cm, minimum height=2.2cm,
+        align=center
+    },
+    features/.style={
+        rectangle, rounded corners=4pt,
+        fill=NavyBlue!45, text=white,
+        font=\small\bfseries,
+        minimum width=4.2cm, minimum height=2.2cm,
+        align=left,
+        text width=3.8cm,
+        inner sep=0.35cm
+    },
+    outer/.style={
+        rectangle, rounded corners=6pt,
+        fill=NavyBlue!20,
+        inner sep=0.3cm
+    }
+]
+
+% ══════════════════════════════════════════════════════════
+%  RELEASE 1
+% ══════════════════════════════════════════════════════════
+\node[release] (r1) at (0,0) {Release\\[0.1cm]1};
+
+\node[sprint] (s1) at ([xshift=2.95cm, yshift=1.45cm] r1.center) {Sprint 1};
+\node[features] (f1) at ([xshift=3.75cm] s1.center) {
+    \textbullet\ Authentification JWT\\[0.2cm]
+    \textbullet\ Gestion des rôles
+};
+
+\node[sprint] (s2) at ([xshift=2.95cm, yshift=-1.45cm] r1.center) {Sprint 2};
+\node[features] (f2) at ([xshift=3.75cm] s2.center) {
+    \textbullet\ Session QR code\\[0.2cm]
+    \textbullet\ Gestion menu
+};
+
+\begin{scope}[on background layer]
+    \node[outer, fit=(r1)(s1)(f1)(s2)(f2)] {};
+\end{scope}
+
+% ══════════════════════════════════════════════════════════
+%  RELEASE 2
+% ══════════════════════════════════════════════════════════
+\node[release] (r2) at (0,-5.6) {Release\\[0.1cm]2};
+
+\node[sprint] (s3) at ([xshift=2.95cm, yshift=1.45cm] r2.center) {Sprint 3};
+\node[features] (f3) at ([xshift=3.75cm] s3.center) {
+    \textbullet\ Dashboard Admin\\[0.2cm]
+};
+
+\node[sprint] (s4) at ([xshift=2.95cm, yshift=-1.45cm] r2.center) {Sprint 4};
+\node[features] (f4) at ([xshift=3.75cm] s4.center) {
+    \textbullet\ Divertissement\\[0.2cm]
+    \textbullet\ Chatbot IA \& RSS
+};
+
+\begin{scope}[on background layer]
+    \node[outer, fit=(r2)(s3)(f3)(s4)(f4)] {};
+\end{scope}
+
+\end{tikzpicture}
+\caption{Découpage des sprints}
+\label{fig:decoupage_sprints}
+\end{figure}
+
+\section{Conclusion}
+L'analyse approfondie des besoins et la planification rigoureuse en sprints nous ont permis
+d'établir une feuille de route claire pour le développement de Coffee Time. Ce chapitre a
+défini le périmètre fonctionnel du projet, posant ainsi les bases nécessaires pour entamer
+la phase de conception technique et de réalisation.

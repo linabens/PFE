@@ -20,15 +20,16 @@ const MessageBubble = ({ message }) => {
       isUser ? styles.userContainer : styles.assistantContainer
     ]}>
       {!isUser && (
-        <View style={styles.avatarSmall}>
-          <Text style={styles.avatarEmoji}>☕</Text>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>C</Text>
+          <View style={styles.statusDot} />
         </View>
       )}
-      
+
       <View style={styles.bubbleWrapper}>
         {isUser ? (
           <LinearGradient
-            colors={[Colors.mocha, Colors.espresso]}
+            colors={['#5C3221', '#2C1810']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.bubble, styles.userBubble]}
@@ -44,13 +45,12 @@ const MessageBubble = ({ message }) => {
             </Text>
           </View>
         )}
-        
-        <Text style={[
-          styles.timestamp,
-          isUser ? styles.userTimestamp : styles.assistantTimestamp
-        ]}>
-          {formatTime(message.timestamp)}
-        </Text>
+
+        <View style={isUser ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }}>
+          <Text style={styles.timestamp}>
+            {formatTime(message.timestamp)}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -59,8 +59,9 @@ const MessageBubble = ({ message }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    marginBottom: Spacing.md,
+    marginBottom: 20,
     alignItems: 'flex-end',
+    paddingHorizontal: 4,
   },
   userContainer: {
     justifyContent: 'flex-end',
@@ -68,69 +69,80 @@ const styles = StyleSheet.create({
   assistantContainer: {
     justifyContent: 'flex-start',
   },
-  avatarSmall: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.espresso,
+  avatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#3D1C0C',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  avatarEmoji: {
-    fontSize: 14,
-    color: Colors.cream,
-  },
-  bubbleWrapper: {
-    maxWidth: '82%',
-  },
-  bubble: {
-    padding: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.xl,
+    marginRight: 8,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#FAF3EB',
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  avatarText: {
+    color: '#FAF3EB',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: 'serif',
+  },
+  statusDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    borderWidth: 1.5,
+    borderColor: '#FAF3EB',
+  },
+  bubbleWrapper: {
+    maxWidth: '80%',
+  },
+  bubble: {
+    padding: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#2C1810',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
   },
   userBubble: {
     borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: Colors.bgCard,
+    backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: '#EAD9C9',
   },
   text: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 20,
   },
   userText: {
-    color: Colors.cream,
+    color: '#FAF3EB',
   },
   assistantText: {
-    color: Colors.textPrimary,
+    color: '#3D1C0C',
   },
   timestamp: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 9,
-    color: Colors.textMuted,
+    color: '#A1887F',
     marginTop: 4,
-    opacity: 0.7,
-  },
-  userTimestamp: {
-    textAlign: 'right',
-    marginRight: 4,
-  },
-  assistantTimestamp: {
-    textAlign: 'left',
-    marginLeft: 4,
+    marginHorizontal: 4,
   },
 });
 

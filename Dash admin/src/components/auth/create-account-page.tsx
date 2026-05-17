@@ -77,9 +77,9 @@ export function CreateAccountPage({
   onBackToLogin: () => void
   onSuccess: () => void
 }) {
-  const [step, setStep] = React.useState<1 | 2 | 3 | 4>(1)
+  const [step, setStep] = React.useState<1 | 2 | 3>(1)
   const [data, setData] = React.useState<FormData>({
-    role: null,
+    role: 'staff',
     fullName: "",
     email: "",
     phone: "",
@@ -118,12 +118,9 @@ export function CreateAccountPage({
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
   }
 
-  function validateStep(s: 1 | 2 | 3 | 4): boolean {
+  function validateStep(s: 1 | 2 | 3): boolean {
     const next: Record<string, string> = {}
     if (s === 1) {
-      if (!data.role) next.role = "Please choose a role"
-    }
-    if (s === 2) {
       if (data.fullName.trim().length < 3)
         next.fullName = "Name must be at least 3 characters"
       if (!/^\S+@\S+\.\S+$/.test(data.email))
@@ -134,7 +131,7 @@ export function CreateAccountPage({
       else if (calcAge(data.dob) < 18)
         next.dob = "You must be 18 or older to register"
     }
-    if (s === 3) {
+    if (s === 2) {
       const { score } = evaluatePassword(data.password)
       if (score < 71) next.password = "Please choose a stronger password"
       if (data.password !== data.confirmPassword)
@@ -142,7 +139,7 @@ export function CreateAccountPage({
       if (data.securityAnswer.trim().length < 3)
         next.securityAnswer = "Answer must be at least 3 characters"
     }
-    if (s === 4) {
+    if (s === 3) {
       if (Object.keys(data.workDays).length === 0)
         next.workDays = "Please select at least one work day"
     }
@@ -157,14 +154,14 @@ export function CreateAccountPage({
 
   function next() {
     if (!validateStep(step)) return
-    if (step < 4) setStep((step + 1) as 1 | 2 | 3 | 4)
+    if (step < 3) setStep((step + 1) as 1 | 2 | 3)
   }
   function back() {
-    if (step > 1) setStep((step - 1) as 1 | 2 | 3 | 4)
+    if (step > 1) setStep((step - 1) as 1 | 2 | 3)
   }
 
   async function submit() {
-    if (!validateStep(4)) return;
+    if (!validateStep(3)) return;
     setSubmitting(true);
     
     try {
@@ -220,7 +217,7 @@ export function CreateAccountPage({
           Back to login
         </button>
         <span className="text-[11px] uppercase tracking-[0.3em] text-rosewood">
-          Step {step} of 4
+          Step {step} of 3
         </span>
       </div>
 
@@ -232,31 +229,18 @@ export function CreateAccountPage({
       </div>
 
       <div className="mt-6">
-        <ProgressIndicator current={step} />
+        <ProgressIndicator current={step} total={3} />
       </div>
 
       <div key={step} className="mt-7 animate-fade-up">
         {step === 1 && (
-          <Step1Role
-            value={data.role}
-            onChange={(role) => {
-              update("role", role);
-              // Use functional update to avoid stale closure issues
-              setTimeout(() => {
-                setStep((current) => (current === 1 ? 2 : current));
-              }, 400);
-            }}
-            error={errors.role}
-          />
-        )}
-        {step === 2 && (
           <Step2Info
             data={data}
             errors={errors}
             update={update}
           />
         )}
-        {step === 3 && (
+        {step === 2 && (
           <Step3Security
             data={data}
             errors={errors}
@@ -267,7 +251,7 @@ export function CreateAccountPage({
             setShowPw2={setShowPw2}
           />
         )}
-        {step === 4 && (
+        {step === 3 && (
           <Step4Details data={data} errors={errors} update={update} />
         )}
       </div>
@@ -284,7 +268,7 @@ export function CreateAccountPage({
           Back
         </button>
 
-        {step < 4 ? (
+        {step < 3 ? (
           <button
             type="button"
             onClick={next}

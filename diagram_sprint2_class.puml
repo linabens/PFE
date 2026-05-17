@@ -1,0 +1,86 @@
+@startuml DiagrammeDeClasseSprint2
+
+' --- Style professionnel Noir & Blanc ---
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam classAttributeIconSize 0
+hide circle
+
+skinparam class {
+  BackgroundColor white
+  BorderColor black
+  ArrowColor black
+  FontColor black
+  FontSize 12
+}
+
+title Diagramme de Classes — Sprint 2\nCommandes et Menu
+
+' --- Entités ---
+
+class Session {
+  - id : Integer
+  - token : String
+  - status : String
+  - expires_at : DateTime
+  + estValide() : Boolean
+}
+
+class Table {
+  - id : Integer
+  - number : Integer
+  - qr_code_path : String
+}
+
+class Commande {
+  - id : Integer
+  - status : String
+  - total_price : Float
+  - loyalty_used : Boolean
+  - created_at : DateTime
+  + calculerTotal()
+  + genererFacturePDF()
+}
+
+class ArticleCommande {
+  - quantity : Integer
+  - unit_price : Float
+  - subtotal : Float
+  - options : JSON
+}
+
+class Produit {
+  - id : Integer
+  - name : String
+  - description : Text
+  - price : Float
+  - image_url : String
+  - is_active : Boolean
+}
+
+class Categorie {
+  - id : Integer
+  - name : String
+}
+
+class DemandeAssistance {
+  - id : Integer
+  - status : String
+  - created_at : DateTime
+  + marquerTraitee()
+}
+
+' --- Relations ---
+
+Session "*" -- "1" Table : associée à >
+Commande "1" -- "1" Session : appartient à >
+Commande "*" -- "1" Table : passée depuis >
+
+Commande "1" *-- "1..*" ArticleCommande : contient >
+ArticleCommande "*" -- "1" Produit : référence >
+Produit "*" -- "1" Categorie : appartient à >
+
+DemandeAssistance "*" -- "1" Table : concerne >
+
+@enduml

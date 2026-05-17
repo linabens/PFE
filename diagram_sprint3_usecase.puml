@@ -1,0 +1,78 @@
+@startuml
+skinparam handwritten false
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName "Arial"
+
+' --- Couleurs et Styles ---
+skinparam usecase {
+    BackgroundColor white
+    BorderColor #0054A6
+    FontSize 12
+}
+skinparam actor {
+    BorderColor black
+    BackgroundColor white
+}
+
+left to right direction
+
+actor "Admin" as admin
+actor "Staff" as staff
+
+' Héritage Admin -> Staff
+admin --|> staff
+
+rectangle "Système Coffee Time - Dashboard" {
+    
+    ' --- Authentification ---
+    (S'authentifier) as UC_Auth
+
+    ' --- Bloc Gérer les produits ---
+    (Ajouter produit) as UC_Add
+    (Modifier produit) as UC_Edit
+    (Supprimer produit) as UC_Del
+    (Consulter produit) as UC_View
+    (Gérer les produits) as UC_Prod
+    
+    UC_Add --|> UC_Prod
+    UC_Edit --|> UC_Prod
+    UC_Del --|> UC_Prod
+    UC_View --|> UC_Prod
+    
+    ' --- Bloc Staff ---
+    (Gérer les demandes d'assistance) as UC_Help
+    (Traiter les commandes) as UC_Orders
+    (Mettre à jour statut) as UC_Status
+    
+    UC_Orders ..> UC_Status : <<include>>
+    
+    ' --- Bloc Admin ---
+    (Gérer les tables & QR Codes) as UC_Tables
+    (Gérer les catégories) as UC_Cats
+    (Gérer les utilisateurs) as UC_Users
+    (Consulter statistiques) as UC_Stats
+    (Produits populaires) as UC_Pop
+    
+    UC_Stats ..> UC_Pop : <<include>>
+
+    ' --- Inclusions d'authentification ---
+    UC_Help   ..> UC_Auth : <<include>>
+    UC_Orders ..> UC_Auth : <<include>>
+    UC_Prod   ..> UC_Auth : <<include>>
+    UC_Tables ..> UC_Auth : <<include>>
+    UC_Cats   ..> UC_Auth : <<include>>
+    UC_Users  ..> UC_Auth : <<include>>
+    UC_Stats  ..> UC_Auth : <<include>>
+    
+    ' --- Liaisons Acteurs ---
+    staff -- UC_Help
+    staff -- UC_Orders
+    
+    admin -- UC_Prod
+    admin -- UC_Tables
+    admin -- UC_Cats
+    admin -- UC_Users
+    admin -- UC_Stats
+}
+@enduml

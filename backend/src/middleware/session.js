@@ -26,7 +26,9 @@ async function authenticateSession(req, res, next) {
     }
     const v = SessionModel.validateSessionRow(session);
     if (!v.ok) {
-      throw ApiError.unauthorized(SESSION_ERROR_FR[v.code] || 'Session invalide.');
+      const errorMsg = SESSION_ERROR_FR[v.code] || 'Session invalide.';
+      console.warn(`[SessionAuth] Access denied: ${v.code} for token ${token.substring(0, 8)}...`);
+      throw ApiError.unauthorized(errorMsg);
     }
     const refreshed = await SessionModel.touch(token);
     if (!refreshed) {

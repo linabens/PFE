@@ -1,0 +1,384 @@
+% ============================================================
+%  CHAPITRE 4 — Sprint 4 : Services additionnels
+%  Application : Coffee Time
+% ============================================================
+
+\chapter{Sprint 4 : Services additionnels}
+
+% ────────────────────────────────────────────────────────────
+\section{Introduction}
+% ────────────────────────────────────────────────────────────
+
+Ce chapitre présente le quatrième et dernier sprint du projet \textbf{Coffee Time},
+intitulé « Services additionnels ». Après avoir déployé les fonctionnalités de base
+lors des sprints précédents — gestion du menu, prise de commande, suivi des tables et
+gestion des comptes — ce sprint enrichit l'application avec des services à forte valeur
+ajoutée destinés à fidéliser la clientèle et à animer son séjour en salle :
+un \textbf{assistant conversationnel intelligent} basé sur la technique RAG
+(\textit{Retrieval-Augmented Generation}), un \textbf{programme de fidélité} à paliers,
+un \textbf{fil d'actualités} et un espace \textbf{jeux de divertissement}.
+
+La suite du chapitre s'organise en trois parties : la planification et la conception
+du sprint, illustrées par le backlog, les raffinements de cas d'utilisation et les
+diagrammes de séquence ; puis la revue du sprint présentant les interfaces réalisées.
+
+% ────────────────────────────────────────────────────────────
+\section{Sprint 4 : Services additionnels}
+% ────────────────────────────────────────────────────────────
+
+\subsection{Backlog du Sprint 4}
+
+Le tableau~\ref{tab:backlog_sprint4} présente les \textit{user stories} planifiées
+pour ce sprint sous l'intitulé « Services mobiles complémentaires ».
+
+\begin{table}[H]
+\centering
+\caption{Backlog du Sprint 4 — Services mobiles complémentaires}
+\label{tab:backlog_sprint4}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|p{3.5cm}|p{6.2cm}|c|c|}
+\hline
+\textbf{Id} & \textbf{Fonctionnalité} & \textbf{User Story} & \textbf{Priorité} & \textbf{Complexité} \\
+\hline
+US18 & Jeux de divertissement &
+  En tant que client, je veux accéder à une sélection de mini-jeux thématiques
+  café pour m'occuper agréablement pendant mon attente en salle. &
+  Moyenne & 8 \\
+\hline
+US20 & Programme de fidélité &
+  En tant que client fidèle, je veux cumuler des points à chaque commande,
+  visualiser mon palier (Bronze, Silver, Gold, Platinum) et échanger mes points
+  contre des récompenses. &
+  Haute & 8 \\
+\hline
+US21 & Fil d'actualités &
+  En tant que client, je veux consulter les dernières actualités, offres et
+  événements du café directement depuis l'application mobile. &
+  Moyenne & 5 \\
+\hline
+US22 & Assistant conversationnel &
+  En tant que client, je veux poser des questions sur le menu et recevoir des
+  réponses précises et vérifiées basées uniquement sur le catalogue réel du café. &
+  Haute & 13 \\
+\hline
+\end{tabular}
+\end{table}
+
+% ────────────────────────────────────────────────────────────
+\subsection{Raffinement des cas d'utilisation des services additionnels}
+% ────────────────────────────────────────────────────────────
+
+\subsubsection*{A- Cas d'utilisation « Assistant conversationnel »}
+
+La figure~\ref{fig:uc_chatbot} présente le diagramme de cas d'utilisation
+relatif à l'assistant conversationnel Coffee Time.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/sprint4/uc_chatbot}
+  \caption{Diagramme de cas d'utilisation — Assistant conversationnel}
+  \label{fig:uc_chatbot}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle de cas d'utilisation — Assistant conversationnel}
+\label{tab:uc_chatbot}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|p{4cm}|p{9.5cm}|}
+\hline
+\textbf{Cas d'utilisation} & Interagir avec l'assistant conversationnel \\
+\hline
+\textbf{Acteur} & Client \\
+\hline
+\textbf{Pré-condition} & L'application mobile est lancée et le client accède à l'onglet Assistant. \\
+\hline
+\textbf{Post-condition} & Le client reçoit une réponse précise et vérifiée basée sur le catalogue réel du café. \\
+\hline
+\textbf{Description du scénario principal} &
+  \textbf{1.} Le client saisit une question sur le menu ou sélectionne une suggestion rapide. \newline
+  \textbf{2.} Le système encode la question en vecteur sémantique (modèle multilingual-e5-small). \newline
+  \textbf{3.} Le système récupère les produits et FAQ les plus pertinents par similarité cosinus. \newline
+  \textbf{4.} Le contexte structuré est transmis au modèle de langage LLaMA 3.1 8B. \newline
+  \textbf{5.} La réponse générée est validée (vérification des prix) puis retournée au client. \newline
+  \textbf{6.} L'interface affiche la réponse avec les fiches produits sources. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection*{B- Cas d'utilisation « Programme de fidélité »}
+
+La figure~\ref{fig:uc_loyalty} présente le diagramme de cas d'utilisation
+du programme de fidélité à paliers.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/sprint4/uc_loyalty}
+  \caption{Diagramme de cas d'utilisation — Programme de fidélité}
+  \label{fig:uc_loyalty}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle de cas d'utilisation — Programme de fidélité}
+\label{tab:uc_loyalty}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|p{4cm}|p{9.5cm}|}
+\hline
+\textbf{Cas d'utilisation} & Consulter le programme de fidélité \\
+\hline
+\textbf{Acteur} & Client \\
+\hline
+\textbf{Pré-condition} & Le client possède un compte fidélité Coffee Time (Bronze, Silver, Gold ou Platinum). \\
+\hline
+\textbf{Post-condition} & Le client consulte son solde de points, son palier et peut échanger ses points contre une récompense. \\
+\hline
+\textbf{Description du scénario principal} &
+  \textbf{1.} Le client navigue vers l'onglet « Fidélité » de l'application mobile. \newline
+  \textbf{2.} Le système affiche la carte de fidélité avec le palier actuel, le solde de points disponibles et la barre de progression vers le palier suivant. \newline
+  \textbf{3.} Le client consulte l'historique de ses transactions de points. \newline
+  \textbf{4.} Le client accède au catalogue des récompenses et sélectionne une offre à échanger. \newline
+  \textbf{5.} Le système vérifie que le solde est suffisant et procède à l'échange. \newline
+  \textbf{6.} Le solde est mis à jour et une confirmation est affichée. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection*{C- Cas d'utilisation « Jeux de divertissement »}
+
+La figure~\ref{fig:uc_games} présente le diagramme de cas d'utilisation
+de l'espace jeux de divertissement.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/sprint4/uc_games}
+  \caption{Diagramme de cas d'utilisation — Jeux de divertissement}
+  \label{fig:uc_games}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle de cas d'utilisation — Jeux de divertissement}
+\label{tab:uc_games}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|p{4cm}|p{9.5cm}|}
+\hline
+\textbf{Cas d'utilisation} & Jouer à un jeu de divertissement \\
+\hline
+\textbf{Acteur} & Client \\
+\hline
+\textbf{Pré-condition} & Le client est en salle et accède à l'onglet « Fun » de l'application. \\
+\hline
+\textbf{Post-condition} & Le client a participé à un mini-jeu et son score est enregistré localement. \\
+\hline
+\textbf{Description du scénario principal} &
+  \textbf{1.} Le client ouvre l'onglet « Fun » et visualise la grille des six mini-jeux disponibles. \newline
+  \textbf{2.} Le client sélectionne un jeu (Quiz Barista, Mots Cachés, Mots Croisés, Word Brew, Memory ou Coffee Quiz). \newline
+  \textbf{3.} Le jeu se lance et affiche les instructions ainsi que le score courant. \newline
+  \textbf{4.} Le client joue une ou plusieurs parties. \newline
+  \textbf{5.} À la fin d'une partie, le système enregistre le score et l'affiche dans le récapitulatif. \newline
+  \textbf{6.} Le client peut rejouer ou choisir un autre jeu. \\
+\hline
+\end{tabular}
+\end{table}
+
+% ────────────────────────────────────────────────────────────
+\subsection{Diagrammes de séquence}
+% ────────────────────────────────────────────────────────────
+
+\subsubsection*{A- Diagramme de séquence « Interagir avec l'assistant »}
+
+La figure~\ref{fig:seq_chatbot} illustre le flux complet d'une interaction avec
+l'assistant conversationnel, depuis l'envoi du message par le client jusqu'à la
+réception de la réponse validée.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/sprint4/seq_chatbot}
+  \caption{Diagramme de séquence — Interagir avec l'assistant}
+  \label{fig:seq_chatbot}
+\end{figure}
+
+Le message du client est reçu par le backend via la route
+\texttt{POST /api/chat/message}. Le \texttt{RagService} encode la question en
+vecteur sémantique à l'aide du modèle \textbf{multilingual-e5-small}, puis compare
+ce vecteur à ceux des produits actifs stockés dans PostgreSQL par similarité cosinus.
+Les cinq produits et les deux FAQ les plus proches sont sélectionnés et injectés
+comme contexte dans la requête envoyée à l'API Groq (\textbf{LLaMA 3.1 8B Instant},
+\texttt{temperature=0.1}). La réponse générée est ensuite vérifiée : tout prix
+mentionné est comparé aux données réelles du contexte avant d'être retourné
+au client avec les fiches sources.
+
+\subsubsection*{B- Diagramme de séquence « Consulter le programme de fidélité »}
+
+La figure~\ref{fig:seq_loyalty} illustre le flux de consultation et d'attribution
+de points lors du passage en caisse.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/sprint4/seq_loyalty}
+  \caption{Diagramme de séquence — Consulter le programme de fidélité}
+  \label{fig:seq_loyalty}
+\end{figure}
+
+Lors du passage en caisse, le système calcule les points à attribuer au taux de
+\textbf{1 point par tranche de 50 TND} dépensés. Le \texttt{LoyaltyService} persiste
+la transaction dans la table \texttt{loyalty\_transactions} et met à jour le solde
+du compte. Le palier (Bronze, Silver à 500 pts, Gold à 1\,500 pts, Platinum à
+4\,000 pts) est recalculé côté client à partir du total de points cumulés à vie,
+ce qui permet un affichage instantané sans requête réseau supplémentaire.
+
+% ────────────────────────────────────────────────────────────
+\section{Revue du Sprint 4}
+% ────────────────────────────────────────────────────────────
+
+\subsection{Interfaces mobiles}
+
+Cette section présente les interfaces réalisées au cours du Sprint 4,
+regroupées par fonctionnalité.
+
+\paragraph{Assistant conversationnel.}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/chat_welcome}
+    \caption*{(a) Accueil assistant}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/chat_conversation}
+    \caption*{(b) Conversation}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/chat_sources}
+    \caption*{(c) Fiches sources}
+  \end{minipage}
+  \caption{Interfaces de l'assistant conversationnel Coffee Time}
+  \label{fig:chat_ui}
+\end{figure}
+
+L'interface de l'assistant conversationnel reprend la charte graphique
+espresso/crème de l'application. L'en-tête affiche le nom « Coffee Time »,
+un indicateur de statut en ligne et un bouton de réinitialisation. Les messages
+du client sont présentés dans des bulles à dégradé sombre, tandis que les
+réponses de l'assistant apparaissent sur fond blanc avec un avatar circulaire
+et un indicateur de frappe animé. Une barre de suggestions rapides, mise à jour
+dynamiquement selon le contexte, facilite la navigation.
+
+\paragraph{Programme de fidélité.}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/loyalty_card}
+    \caption*{(a) Carte et solde}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/loyalty_rewards}
+    \caption*{(b) Catalogue récompenses}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.30\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/loyalty_history}
+    \caption*{(c) Historique}
+  \end{minipage}
+  \caption{Interfaces du programme de fidélité}
+  \label{fig:loyalty_ui}
+\end{figure}
+
+L'écran de fidélité affiche une carte animée indiquant le palier actuel du client
+(Bronze, Silver, Gold ou Platinum) avec son code couleur distinctif, le solde de
+points disponibles et une barre de progression vers le palier suivant. Un onglet
+\textit{Récompenses} liste le catalogue échangeable (espresso offert à 150 pts,
+réduction de 10\% à 300 pts, boisson gratuite à 500 pts, repas offert à 1\,000 pts).
+
+\paragraph{Jeux de divertissement.}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/games_grid}
+    \caption*{(a) Grille des jeux}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/games_quiz}
+    \caption*{(b) Quiz Barista}
+  \end{minipage}
+  \caption{Interfaces de l'espace jeux de divertissement}
+  \label{fig:games_ui}
+\end{figure}
+
+L'espace « Fun » propose six mini-jeux thématiques café accessibles en un tap
+depuis la grille de l'onglet dédié : Quiz Barista, Mots Cachés, Mots Croisés,
+Word Brew, Memory et Coffee Quiz. Chaque jeu est implémenté comme une page
+autonome dans \texttt{mobile/app/games/}, les scores étant persistés localement
+via \texttt{AsyncStorage} et gérés centralement par le \texttt{GameContext}.
+
+\paragraph{Fil d'actualités.}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/news_feed}
+    \caption*{(a) Fil d'actualités}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/sprint4/news_detail}
+    \caption*{(b) Détail d'une actualité}
+  \end{minipage}
+  \caption{Interface du fil d'actualités}
+  \label{fig:news_ui}
+\end{figure}
+
+Le fil d'actualités permet aux clients de consulter les dernières offres, promotions
+et événements du café directement depuis l'application. Les articles sont publiés
+par l'administrateur depuis le tableau de bord et affichés en temps réel dans
+un flux paginé sur l'interface mobile.
+
+\subsection{Interfaces d'administration}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/sprint4/loyalty_admin}
+  \caption{Gestion du programme de fidélité — Interface administrateur}
+  \label{fig:loyalty_admin}
+\end{figure}
+
+Le tableau de bord administrateur intègre une page \textit{Programme de Fidélité}
+permettant de rechercher un compte client par nom ou numéro de téléphone,
+de consulter son historique de transactions, d'ajuster manuellement un solde de
+points et de visualiser des statistiques globales (répartition par palier, points
+distribués ce mois-ci).
+
+% ────────────────────────────────────────────────────────────
+\section{Conclusion}
+% ────────────────────────────────────────────────────────────
+
+Ce quatrième sprint clôt le cycle de développement de l'application
+\textbf{Coffee Time} en déployant les services mobiles complémentaires qui
+différencient la solution sur le marché. L'assistant conversationnel basé sur
+l'architecture RAG garantit des réponses précises et vérifiées grâce au système
+anti-hallucination combinant un prompt système strict, une température basse et
+une validation post-génération des prix. Le programme de fidélité à quatre paliers
+renforce la relation client sur le long terme. Le fil d'actualités maintient
+l'engagement des utilisateurs entre leurs visites, et l'espace de six mini-jeux
+thématiques enrichit agréablement leur séjour en salle.
+
+L'ensemble de ces fonctionnalités, combinées à celles des sprints précédents,
+constitue une application mobile et un tableau de bord d'administration complets,
+cohérents et prêts à être déployés en conditions réelles.

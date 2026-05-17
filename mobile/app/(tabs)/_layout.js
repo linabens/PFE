@@ -6,6 +6,7 @@ import { useCartStore } from '../../src/store/useCartStore';
 import { useLoyalty } from '../../src/context/LoyaltyContext';
 import FloatingCartBar from '../../src/components/ui/FloatingCartBar';
 import CartBottomSheet from '../../src/components/ui/CartBottomSheet';
+import ChatFAB from '../../src/components/ChatFAB';
 
 // Palette Match (Warm Cream Protocol)
 const C = {
@@ -91,6 +92,7 @@ export default function TabLayout() {
     </Tabs>
       <FloatingCartBar />
       <CartBottomSheet />
+      <ChatFAB />
     </View>
   );
 }

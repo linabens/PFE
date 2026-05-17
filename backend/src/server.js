@@ -23,7 +23,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-session-token'],
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use((req, res, next) => {
   const start = Date.now();
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Started`);
@@ -86,16 +87,39 @@ app.use(errorHandler);
 // Démarrage du serveur
 const PORT = config.port || 3000;
 
-try {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-    console.log(`📍 http://localhost:${PORT}`);
-    console.log(`📍 http://127.0.0.1:${PORT}`);
-  });
-} catch (error) {
-  console.error('❌ Erreur au démarrage du serveur:', error);
-  process.exit(1);
-}
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log(`📍 http://127.0.0.1:${PORT}`);
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.warn(`⚠️  Port ${PORT} occupé — tentative de libération...`);
+    const { execSync } = require('child_process');
+    try {
+      if (process.platform === 'win32') {
+        const result = execSync(`netstat -ano | findstr :${PORT}`).toString();
+        const pids = [...new Set(result.trim().split('\n').map(l => l.trim().split(/\s+/).pop()).filter(p => /^\d+$/.test(p) && p !== '0'))];
+        pids.forEach(pid => { try { execSync(`taskkill /PID ${pid} /F`); } catch {} });
+      } else {
+        execSync(`lsof -ti:${PORT} | xargs kill -9`);
+      }
+      console.log(`✅ Port ${PORT} libéré — redémarrage dans 1s...`);
+      setTimeout(() => {
+        server.listen(PORT, '0.0.0.0', () => {
+          console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+        });
+      }, 1000);
+    } catch (e) {
+      console.error(`❌ Impossible de libérer le port ${PORT}. Fermez l'autre instance manuellement.`);
+      process.exit(1);
+    }
+  } else {
+    console.error('❌ Erreur serveur:', error.message);
+    process.exit(1);
+  }
+});
 
 module.exports = app;
 

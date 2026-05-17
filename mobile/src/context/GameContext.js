@@ -7,10 +7,8 @@ const INITIAL_SCORES = {
   memory: { bestTime: null, gamesPlayed: 0 },
   quiz: { bestScore: 0, gamesPlayed: 0 },
   wordScramble: { bestScore: 0, gamesPlayed: 0 },
-  ticTacToe: { wins: 0, losses: 0, draws: 0 },
   puzzle: { bestTime3x3: null, bestTime4x4: null, gamesPlayed: 0 },
   crossword: { bestScore: 0, gamesPlayed: 0 },
-  spinWheel: { spinsToday: 0, lastSpinDate: null, coupons: [] },
 };
 
 export function GameProvider({ children }) {
@@ -54,14 +52,6 @@ export function GameProvider({ children }) {
     saveScores(next);
   };
 
-  const updateTicTacToeStats = (result) => {
-    const next = { ...scores, ticTacToe: { ...scores.ticTacToe } };
-    if (result === 'win') next.ticTacToe.wins += 1;
-    else if (result === 'loss') next.ticTacToe.losses += 1;
-    else next.ticTacToe.draws += 1;
-    saveScores(next);
-  };
-
   const updatePuzzleScore = (timeInSeconds, difficulty) => {
     const next = { ...scores, puzzle: { ...scores.puzzle } };
     const key = difficulty === '3x3' ? 'bestTime3x3' : 'bestTime4x4';
@@ -78,40 +68,8 @@ export function GameProvider({ children }) {
     saveScores(next);
   };
 
-  const spinsRemaining = () => {
-    const today = new Date().toDateString();
-    if (!scores.spinWheel.lastSpinDate || scores.spinWheel.lastSpinDate !== today) return 3;
-    return Math.max(0, 3 - scores.spinWheel.spinsToday);
-  };
-
-  const recordWheelSpin = (prize) => {
-    const next = { ...scores, spinWheel: { ...scores.spinWheel, coupons: [...scores.spinWheel.coupons] } };
-    const today = new Date().toDateString();
-    if (next.spinWheel.lastSpinDate !== today) {
-      next.spinWheel.spinsToday = 1;
-      next.spinWheel.lastSpinDate = today;
-    } else {
-      next.spinWheel.spinsToday += 1;
-    }
-    if (prize !== 'BETTER LUCK') {
-      next.spinWheel.coupons.push({
-        id: `CT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        prize,
-        date: new Date().toISOString(),
-        expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        used: false,
-      });
-    }
-    saveScores(next);
-  };
-
-  const markCouponUsed = (couponId) => {
-    const next = { ...scores, spinWheel: { ...scores.spinWheel, coupons: scores.spinWheel.coupons.map(c => c.id === couponId ? { ...c, used: true } : c) } };
-    saveScores(next);
-  };
-
   return (
-    <GameContext.Provider value={{ scores, updateMemoryScore, updateQuizScore, updateWordScrambleScore, updateTicTacToeStats, updatePuzzleScore, updateCrosswordScore, spinsRemaining, recordWheelSpin, markCouponUsed }}>
+    <GameContext.Provider value={{ scores, updateMemoryScore, updateQuizScore, updateWordScrambleScore, updatePuzzleScore, updateCrosswordScore }}>
       {children}
     </GameContext.Provider>
   );

@@ -1,0 +1,302 @@
+\chapter{Release 1}
+
+\section*{Introduction}
+
+Ce chapitre présente la première version du projet Coffee Time, qui inclut les deux premiers sprints. Le Sprint 1 porte sur l'authentification et la gestion des accès pour l'Admin et le Staff. Le Sprint 2 concerne le module de commande côté client, avec les parties suivantes : session QR code, consultation du menu (pour les clients), gestion du panier, et suivi de commande. Pour chaque sprint, nous allons travailler sur les objectifs, le backlog, l'analyse, la conception et la réalisation.
+
+\section{Sprint 1 : Authentification et gestion des accès}
+
+\subsection{Objectif du Sprint 1}
+
+Ce sprint a pour objectif de mettre en place le module d'authentification de l'application. Il permet à l'Admin et au Staff d'accéder au tableau de bord selon leurs rôles respectifs, grâce à un mécanisme sécurisé basé sur des tokens JWT. L'Admin dispose en plus de fonctionnalités de gestion des comptes Staff.
+
+\subsection{Backlog du sprint}
+
+\begin{table}[h]
+\centering
+\caption{Backlog du Sprint 1 — Authentification et gestion des accès}
+\begin{tabular}{|p{1cm}|p{2.5cm}|p{6cm}|p{1.5cm}|p{1.5cm}|}
+\hline
+\textbf{Id} & \textbf{Features} & \textbf{User Stories} & \textbf{Priority} & \textbf{Complexity} \\
+\hline
+US01 & Authentification & En tant qu'utilisateur (Admin ou Staff), je veux m'authentifier avec mon email et mon mot de passe afin d'accéder à mon tableau de bord. & Haute & Moyenne \\
+\hline
+US02 & Récupération de mot de passe & En tant qu'utilisateur, je veux récupérer mon mot de passe oublié via ma question de sécurité afin de retrouver l'accès à mon compte. & Haute & Moyenne \\
+\hline
+US03 & Gestion du profil & En tant qu'utilisateur, je veux modifier mon profil (nom, téléphone, avatar, mot de passe) afin de maintenir mes informations à jour. & Moyenne & Faible \\
+\hline
+US04 & Gestion des comptes Staff & En tant qu'Admin, je veux créer, modifier et supprimer des comptes Staff afin de gérer l'équipe du café. & Haute & Moyenne \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Analyse du Sprint 1}
+
+\subsubsection{Diagramme de cas d'utilisation}
+
+La figure 3.1 présente les différentes interactions entre les acteurs et le système dans le cadre du Sprint 1.
+
+\textbf{Acteurs et cas d'utilisation :}
+\begin{itemize}
+\item \textbf{Admin} : administrateur avec accès complet
+  \begin{itemize}
+    \item S'authentifier
+    \item Récupérer mot de passe
+    \item Gérer son profil
+    \item Gérer les comptes Staff (création, modification, suppression)
+  \end{itemize}
+\item \textbf{Staff} : employé du café avec droits limités
+  \begin{itemize}
+    \item S'authentifier
+    \item Récupérer mot de passe
+    \item Gérer son profil
+  \end{itemize}
+\end{itemize}
+
+\textbf{Point important :} Le cas d'utilisation « Gérer les comptes Staff » est réservé exclusivement à l'Admin pour gérer l'équipe du café.
+
+\subsubsection{Description des scénarios}
+
+\textbf{S'authentifier :}
+\begin{enumerate}
+\item L'utilisateur saisit son adresse email et son mot de passe.
+\item Il clique sur le bouton de connexion.
+\item Si les credentials sont corrects, le système génère un token JWT et redirige l'utilisateur vers son tableau de bord.
+\item Si le login ou le mot de passe est incorrect, un message d'erreur s'affiche.
+\item Reprendre l'étape 1.
+\end{enumerate}
+
+\textbf{Récupérer mot de passe :}
+\begin{enumerate}
+\item L'utilisateur clique sur « Mot de passe oublié ».
+\item Il saisit son adresse email.
+\item Le système affiche sa question de sécurité.
+\item L'utilisateur saisit sa réponse et clique sur « Vérifier ».
+\item Si la réponse est correcte, l'utilisateur saisit et confirme son nouveau mot de passe.
+\item Le système met à jour le mot de passe et redirige vers la connexion.
+\item Si la réponse est incorrecte, un message d'erreur s'affiche.
+\item Reprendre l'étape 4.
+\end{enumerate}
+
+\textbf{Gérer son profil :}
+\begin{enumerate}
+\item L'utilisateur accède à sa page de profil en cliquant sur son avatar.
+\item Il modifie les informations souhaitées : nom, téléphone ou avatar.
+\item Il clique sur « Enregistrer ».
+\item Le système met à jour les données et affiche une confirmation.
+\item Si l'utilisateur souhaite changer son mot de passe, il saisit son mot de passe actuel puis le nouveau deux fois.
+\item Le système vérifie et met à jour le mot de passe.
+\end{enumerate}
+
+\textbf{Gérer les comptes Staff (Admin ONLY) :}
+\begin{enumerate}
+\item L'Admin accède à la section « Gestion des utilisateurs » dans le tableau de bord.
+\item Il voit la liste de tous les comptes (Admin et Staff).
+\item Pour créer un compte :
+  \begin{enumerate}
+    \item L'Admin clique sur « Créer un nouvel utilisateur ».
+    \item Il saisit : nom complet, email, mot de passe temporaire, rôle (Admin ou Staff).
+    \item Il définit une question de sécurité et sa réponse.
+    \item Le système crée le compte et envoie une notification de confirmation.
+  \end{enumerate}
+\item Pour modifier un compte :
+  \begin{enumerate}
+    \item L'Admin sélectionne un utilisateur dans la liste.
+    \item Il modifie : nom, email, rôle, ou réinitialise le mot de passe.
+    \item Il clique sur « Enregistrer ».
+    \item Le système met à jour et affiche une confirmation.
+  \end{enumerate}
+\item Pour supprimer un compte :
+  \begin{enumerate}
+    \item L'Admin sélectionne un utilisateur.
+    \item Il clique sur « Supprimer ».
+    \item Une confirmation s'affiche pour éviter une suppression accidentelle.
+    \item Une fois confirmé, le compte est supprimé et le système affiche un message de succès.
+  \end{enumerate}
+\item \textbf{Note :} Seul l'Admin peut accéder à cette fonctionnalité. Le Staff n'a pas accès à la gestion des comptes.
+\end{enumerate}
+
+\subsection{Conception}
+
+\subsubsection{Diagramme de classes du Sprint 1}
+
+\begin{itemize}
+\item Un \textbf{Utilisateur} est représenté par un ensemble d'attributs (id, full\_name, email, password\_hash, phone, role, avatar, security\_question, security\_answer, created\_at). Il peut avoir le rôle Admin ou Staff, ce qui détermine ses droits d'accès dans le système.
+\item Un \textbf{Token JWT} est caractérisé par une valeur signée (value), une date d'expiration (expiry) et un type (type). Il est généré lors de l'authentification et vérifié à chaque requête protégée.
+\end{itemize}
+
+\textbf{Figure 3.2 – Diagramme de classes — Sprint 1}
+
+\subsubsection{Diagrammes de séquence du Sprint 1}
+
+Les figures 3.3 à 3.6 présentent les diagrammes de séquence pour les cas d'utilisation principaux du Sprint 1.
+
+\textbf{Figure 3.3 – Diagramme de séquence — S'authentifier}
+
+\textbf{Figure 3.4 – Diagramme de séquence — Récupérer mot de passe}
+
+\textbf{Figure 3.5 – Diagramme de séquence — Créer un compte Staff}
+
+\textbf{Figure 3.6 – Diagramme de séquence — Modifier/Supprimer un compte Staff}
+
+\subsection{Réalisation du Sprint 1}
+
+Les figures suivantes illustrent les interfaces développées à l'issue du Sprint 1.
+
+\textbf{Figure 3.7 – Interface — Page de connexion}
+
+\textbf{Figure 3.8 – Interface — Récupération de mot de passe}
+
+\textbf{Figure 3.9 – Interface — Gestion du profil}
+
+\textbf{Figure 3.10 – Interface — Gestion des comptes Staff (Admin Dashboard)}
+
+\newpage
+\section{Sprint 2 : Commandes et menu}
+
+\subsection{Objectif du Sprint 2}
+
+Ce sprint constitue le cœur fonctionnel de l'application mobile cliente. Il couvre l'ensemble du parcours de commande : depuis le scan du QR code qui crée une session anonyme, jusqu'à la génération de la facture finale. L'objectif est de permettre au client d'accéder au menu, de composer son panier, de passer commande et de suivre sa préparation en temps réel, sans inscription ni connexion préalable.
+
+\textbf{Note importante :} La consultation du menu par les clients est une fonctionnalité de consultation simple. La gestion complète du menu, des produits et des catégories (création, modification, suppression, organisation) est réservée exclusivement à l'Admin via le tableau de bord d'administration. Le Staff n'a accès qu'à la visualisation et la gestion des commandes en cours.
+
+\subsection{Backlog du sprint}
+
+\begin{table}[h]
+\centering
+\caption{Backlog du Sprint 2 — Commandes et menu}
+\begin{tabular}{|p{1cm}|p{2.5cm}|p{6cm}|p{1.5cm}|p{1.5cm}|}
+\hline
+\textbf{Id} & \textbf{Features} & \textbf{User Stories} & \textbf{Priority} & \textbf{Complexity} \\
+\hline
+US05 & Session QR Code & En tant que client, je veux scanner le QR code de ma table afin de démarrer une session anonyme sans inscription. & Haute & Moyenne \\
+\hline
+US06 & Consultation du menu & En tant que client, je veux consulter les produits disponibles organisés par catégories et rechercher un article afin de choisir ma commande. & Haute & Moyenne \\
+\hline
+US07 & Gestion du panier & En tant que client, je veux ajouter des produits au panier, personnaliser mes options et voir le total afin de préparer ma commande. & Haute & Élevée \\
+\hline
+US08 & Confirmation de commande & En tant que client, je veux confirmer ma commande afin qu'elle soit transmise en cuisine. & Haute & Moyenne \\
+\hline
+US09 & Suivi de commande & En tant que client, je veux suivre l'état de ma commande en temps réel (nouvelle, en préparation, prête) afin d'être informé de son avancement. & Haute & Moyenne \\
+\hline
+US10 & Appel serveur & En tant que client, je veux appeler un serveur depuis l'application afin d'obtenir une assistance à table. & Moyenne & Faible \\
+\hline
+US11 & Génération de facture & En tant que client, je veux générer et consulter la facture de ma commande afin d'avoir un récapitulatif de mes achats. & Moyenne & Faible \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Analyse}
+
+\subsubsection{Diagramme de cas d'utilisation}
+
+La figure 3.11 présente les interactions entre les acteurs et le système pour le Sprint 2. Les acteurs sont :
+
+\begin{itemize}
+\item \textbf{Client} : utilisateur anonyme accédant via QR code depuis son smartphone, sans inscription préalable. Il ne peut que consulter le menu et passer des commandes.
+\item \textbf{Staff} : employé du café qui reçoit et gère les commandes via son tableau de bord, mais ne peut pas modifier le menu (réservé à l'Admin).
+\end{itemize}
+
+\subsubsection{Description des scénarios}
+
+\textbf{Scanner le QR Code :}
+\begin{enumerate}
+\item Le client scanne le QR code affiché sur sa table avec son smartphone.
+\item Le système crée automatiquement une session anonyme liée à la table.
+\item Le client est redirigé vers la page d'accueil de l'application.
+\item Si le QR code est invalide ou expiré, un message d'erreur s'affiche.
+\end{enumerate}
+
+\textbf{Consulter le menu (Client) :}
+\begin{enumerate}
+\item Le client accède au menu depuis la page d'accueil.
+\item Il parcourt les produits organisés par catégories (boissons, desserts, etc.).
+\item Il peut filtrer par catégorie ou rechercher un produit par nom.
+\item Il consulte la fiche d'un produit (description, prix, options disponibles).
+\item \textbf{Note :} Le client n'a accès qu'à la consultation du menu. Il ne peut pas créer, modifier ou supprimer des produits. Ces fonctionnalités sont réservées à l'Admin.
+\end{enumerate}
+
+\textbf{Gérer le panier et confirmer la commande :}
+\begin{enumerate}
+\item Le client ajoute un produit au panier en choisissant ses options (taille, lait, sucre).
+\item Il consulte son panier et ajuste les quantités si nécessaire.
+\item Il visualise le total et clique sur « Commander ».
+\item Le système enregistre la commande et notifie le Staff en temps réel.
+\item Une confirmation s'affiche avec le numéro de commande.
+\end{enumerate}
+
+\textbf{Suivre sa commande :}
+\begin{enumerate}
+\item Le client accède au suivi depuis l'application.
+\item Le système affiche le statut en temps réel : Nouvelle, En préparation, Prête, Livrée.
+\item Le statut se met à jour automatiquement à chaque changement côté Staff.
+\end{enumerate}
+
+\textbf{Appeler un serveur :}
+\begin{enumerate}
+\item Le client appuie sur le bouton « Appeler un serveur ».
+\item Le système enregistre la demande d'assistance et notifie le Staff.
+\item Le Staff reçoit la demande sur son tableau de bord et peut la marquer comme traitée.
+\end{enumerate}
+
+\textbf{Générer la facture :}
+\begin{enumerate}
+\item Le client accède à la section facture depuis son espace commande.
+\item Le système génère un récapitulatif détaillé (produits, quantités, total).
+\item Le client peut consulter et télécharger la facture.
+\end{enumerate}
+
+\subsection{Conception}
+
+\subsubsection{Diagramme de classes du Sprint 2}
+
+\begin{itemize}
+\item Une \textbf{Session} est créée automatiquement lors du scan du QR code. Elle est caractérisée par un identifiant, un token unique, l'identifiant de la table associée, et une date d'expiration. Elle peut être active ou fermée.
+
+\item Une \textbf{Table} est identifiée par un numéro unique et un QR code. Elle héberge une ou plusieurs sessions et peut contenir plusieurs commandes actives simultanément.
+
+\item Une \textbf{Commande} (Order) est associée à une session et une table. Elle regroupe plusieurs articles et possède un statut évoluant en temps réel. Elle génère une facture à la fin du processus.
+
+\item Un \textbf{ArticleCommande} (OrderItem) représente un produit sélectionné dans une commande, avec sa quantité, son prix unitaire et ses options personnalisées.
+
+\item Un \textbf{Produit} appartient à une catégorie et peut proposer plusieurs options (taille, lait, sucre). Il dispose d'un statut actif/inactif géré par l'Admin. \textbf{Note :} Les clients n'ont accès qu'à la consultation des produits actifs.
+
+\item Une \textbf{Catégorie} regroupe les produits du menu. Les clients consultent les catégories pour parcourir le menu. La gestion complète des catégories (création, modification, suppression) est réservée à l'Admin.
+
+\item Une \textbf{DemandeAssistance} est créée lorsqu'un client appelle un serveur. Elle est liée à une table et possède un statut (en attente, traitée).
+
+\end{itemize}
+
+\textbf{Figure 3.12 – Diagramme de classes — Sprint 2}
+
+\subsubsection{Diagrammes de séquence du Sprint 2}
+
+Les figures 3.13, 3.14 et 3.15 présentent les diagrammes de séquence pour les cas d'utilisation principaux du Sprint 2.
+
+\textbf{Figure 3.13 – Diagramme de séquence — Scanner le QR Code}
+
+\textbf{Figure 3.14 – Diagramme de séquence — Passer une commande}
+
+\textbf{Figure 3.15 – Diagramme de séquence — Suivre sa commande}
+
+\subsection{Réalisation du Sprint 2}
+
+Les figures suivantes illustrent les interfaces développées à l'issue du Sprint 2.
+
+\textbf{Figure 3.16 – Interface — Scan du QR Code et démarrage de session}
+
+\textbf{Figure 3.17 – Interface — Consultation du menu}
+
+\textbf{Figure 3.18 – Interface — Gestion du panier}
+
+\textbf{Figure 3.19 – Interface — Suivi de commande en temps réel}
+
+\textbf{Figure 3.20 – Interface — Génération de facture}
+
+\section*{Conclusion}
+
+Dans ce chapitre, nous avons présenté la première release du projet Coffee Time, couvrant les deux premiers sprints. Le Sprint 1 a permis de mettre en place le module d'authentification sécurisé avec gestion des rôles et des profils utilisateurs pour les Admin et Staff. Le Sprint 2 a réalisé le cœur fonctionnel de l'application mobile cliente, offrant au client un parcours complet : du scan du QR code jusqu'à la génération de sa facture.
+
+Une distinction importante a été clarifiée : bien que le client puisse consulter le menu et passer des commandes, la gestion complète du menu, des produits et des catégories est exclusivement réservée à l'Admin via le tableau de bord d'administration. Le Staff, quant à lui, se concentre uniquement sur la réception et la gestion des commandes en cours.
+
+Le prochain chapitre sera consacré à la Release 2, couvrant le tableau de bord d'administration complet et les services additionnels (divertissement, actualités RSS, programme de fidélité et chatbot intelligent).

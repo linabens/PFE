@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Trophy } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLoyalty } from '../context/LoyaltyContext';
 import TierBadgeIcon from '../components/loyalty/TierBadgeIcon';
 
@@ -66,17 +67,17 @@ export default function LoyaltyDashboardScreen() {
     logout,
   } = useLoyalty();
 
-  // Animation de la barre de progression
+  // Animations
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim     = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.timing(progressAnim, {
         toValue: progressToNext,
-        duration: 1000,
-        delay: 300,
+        duration: 1200,
+        delay: 400,
         useNativeDriver: false,
       }),
     ]).start();
@@ -93,18 +94,22 @@ export default function LoyaltyDashboardScreen() {
     router.replace('/(tabs)/loyalty');
   };
 
+  // Traduction des paliers pour l'affichage
+  const displayTierName = tier.name === 'Silver' ? 'Argent' : tier.name === 'Gold' ? 'Or' : tier.name === 'Platinum' ? 'Platine' : tier.name;
+  const displayNextTierName = nextTier?.name === 'Silver' ? 'Argent' : nextTier?.name === 'Gold' ? 'Or' : nextTier?.name === 'Platinum' ? 'Platine' : nextTier?.name;
+
   return (
     <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor="#FAF3EB" />
 
       {/* ── Header ── */}
       <View style={s.header}>
         <View>
-          <Text style={s.headerEyebrow}>TABLEAU DE BORD</Text>
-          <Text style={s.headerTitle}>Mes Rewards</Text>
+          <Text style={s.headerEyebrow}>ESPACE MEMBRE</Text>
+          <Text style={s.headerTitle}>Ma Fidélité</Text>
         </View>
         <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color={C.accent} />
+          <Ionicons name="log-out-outline" size={24} color="#C09891" />
         </TouchableOpacity>
       </View>
 
@@ -113,81 +118,86 @@ export default function LoyaltyDashboardScreen() {
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Carte Points Hero ── */}
-        <View style={s.heroCard}>
-          {/* Ligne utilisateur + palier */}
+        {/* ── Carte de Membre Numérique (VIP Card) ── */}
+        <View style={[s.heroCard, { backgroundColor: tier.color === '#6B3A2A' ? '#2C1810' : tier.color + '20' || '#FFFFFF' }]}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0)']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+          
           <View style={s.heroTop}>
             <View>
-              <Text style={s.heroName}>{loyaltyUser?.name || 'Client'}</Text>
+              <Text style={s.heroName}>{loyaltyUser?.name || 'Client Privilège'}</Text>
               <Text style={s.heroEmail}>{loyaltyUser?.phoneNumber}</Text>
             </View>
             <View style={[s.tierBadge, { backgroundColor: tier.color }]}>
-              <TierBadgeIcon tierName={tier.name} size={15} color={tier.textColor} />
-              <Text style={[s.tierBadgeTxt, { color: tier.textColor }]}>{tier.name}</Text>
+              <TierBadgeIcon tierName={tier.name} size={14} color="#FFFFFF" />
+              <Text style={s.tierBadgeTxt}>{displayTierName}</Text>
             </View>
           </View>
 
-          {/* Points */}
           <View style={s.pointsRow}>
             <Text style={s.pointsNum}>{points.toLocaleString('fr-FR')}</Text>
-            <Text style={s.pointsLabel}>points disponibles</Text>
+            <Text style={s.pointsLabel}>Points cumulés</Text>
           </View>
 
-          {/* Barre de progression */}
           <View style={s.progressSection}>
             <View style={s.progressTrack}>
-              <Animated.View style={[s.progressFill, { width: progressWidth, backgroundColor: C.primary }]} />
+              <Animated.View style={[s.progressFill, { width: progressWidth, backgroundColor: tier.color }]} />
             </View>
             <View style={s.progressLabelRow}>
-              {!nextTier && <Trophy size={14} color={C.muted} strokeWidth={2} style={{ marginRight: 6 }} />}
               <Text style={s.progressLabel}>
                 {nextTier
-                  ? `${Math.max(0, nextTier.minPoints - totalEarned)} pts pour atteindre ${nextTier.name}`
-                  : 'Niveau maximum atteint'}
+                  ? `${Math.max(0, nextTier.minPoints - totalEarned)} pts restants pour le rang ${displayNextTierName}`
+                  : 'Félicitations ! Vous êtes au rang maximum'}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* ── Stats rapides ── */}
+        {/* ── Statistiques ── */}
         <View style={s.statsRow}>
           {[
-            { label: 'Points gagnés', value: totalEarned.toLocaleString('fr-FR'), icon: 'star' },
-            { label: 'Commandes', value: ordersCount, icon: 'bag-handle' },
-            { label: 'Jeux joués', value: gamesCount, icon: 'game-controller' },
+            { label: 'Total gagné', value: totalEarned.toLocaleString('fr-FR'), icon: 'star', color: '#D4AF37' },
+            { label: 'Commandes', value: ordersCount, icon: 'cafe', color: '#5C3221' },
+            { label: 'Jeux', value: gamesCount, icon: 'game-controller', color: '#C09891' },
           ].map((stat, i) => (
             <View key={i} style={s.statCard}>
-              <Ionicons name={stat.icon} size={20} color={C.primary} />
+              <View style={[s.statIconCircle, { backgroundColor: stat.color + '15' }]}>
+                <Ionicons name={stat.icon} size={18} color={stat.color} />
+              </View>
               <Text style={s.statVal}>{stat.value}</Text>
               <Text style={s.statLbl}>{stat.label}</Text>
             </View>
           ))}
         </View>
 
-        {/* ── Actions ── */}
+        {/* ── Actions Principales ── */}
         <View style={s.actionsRow}>
           <TouchableOpacity
             style={s.actionBtnPrimary}
             activeOpacity={0.85}
             onPress={() => router.push('/loyalty/redeem')}
           >
-            <Ionicons name="gift-outline" size={20} color="#FFFFFF" />
-            <Text style={s.actionBtnPrimaryTxt}>Échanger des points</Text>
+            <Ionicons name="gift" size={20} color="#FFFFFF" />
+            <Text style={s.actionBtnPrimaryTxt}>Utiliser mes points</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={s.actionBtnSecondary}
             activeOpacity={0.85}
             onPress={() => router.push('/loyalty/history')}
           >
-            <Ionicons name="time-outline" size={20} color={C.primary} />
+            <Ionicons name="list" size={20} color="#5C3221" />
             <Text style={s.actionBtnSecondaryTxt}>Historique</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Activité récente ── */}
+        {/* ── Activité Récente ── */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Activité récente</Text>
+            <Text style={s.sectionTitle}>Mes dernières activités</Text>
             {history.length > 5 && (
               <TouchableOpacity onPress={() => router.push('/loyalty/history')}>
                 <Text style={s.seeAll}>Voir tout</Text>
@@ -197,8 +207,10 @@ export default function LoyaltyDashboardScreen() {
 
           {recentHistory.length === 0 ? (
             <View style={s.emptyState}>
-              <Ionicons name="star-outline" size={32} color={C.muted} />
-              <Text style={s.emptyText}>Aucune activité encore.{'\n'}Commencez à gagner des points !</Text>
+              <View style={s.emptyIconCircle}>
+                <Ionicons name="calendar-outline" size={32} color="#B89A87" />
+              </View>
+              <Text style={s.emptyText}>Aucune activité enregistrée pour le moment.</Text>
             </View>
           ) : (
             <View style={s.histList}>
@@ -209,14 +221,20 @@ export default function LoyaltyDashboardScreen() {
           )}
         </View>
 
-        {/* ── Info palier actuel ── */}
-        <View style={[s.tierInfoCard, { borderColor: C.border }]}>
-          <View style={[s.tierInfoIcon, { backgroundColor: C.bg }]}>
-            <Ionicons name="trophy-outline" size={24} color={C.primary} />
+        {/* ── Information sur le Statut ── */}
+        <View style={s.tierInfoCard}>
+          <LinearGradient
+            colors={['#FAF3EB', '#FFFFFF']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          />
+          <View style={s.tierInfoIcon}>
+            <Ionicons name="ribbon-outline" size={26} color="#5C3221" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[s.tierInfoName, { color: C.primary }]}>Statut {tier.name}</Text>
-            <Text style={s.tierInfoDesc}>{tier.description}</Text>
+            <Text style={s.tierInfoName}>Avantages du rang {displayTierName}</Text>
+            <Text style={s.tierInfoDesc} numberOfLines={2}>{tier.description}</Text>
           </View>
         </View>
 
@@ -226,155 +244,120 @@ export default function LoyaltyDashboardScreen() {
 }
 
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: C.bg },
-  scroll: { padding: 16, paddingBottom: 48 },
+  safe:   { flex: 1, backgroundColor: '#FAF3EB' },
+  scroll: { padding: 20, paddingBottom: 60 },
 
-  // Header
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 16,
+    paddingHorizontal: 20, paddingVertical: 15,
   },
   headerEyebrow: {
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 9, letterSpacing: 2, color: C.muted,
+    fontSize: 10, letterSpacing: 2, color: '#B89A87',
   },
   headerTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 24, color: C.primary,
+    fontSize: 26, color: '#3D1C0C',
   },
-  logoutBtn: { padding: 8 },
+  logoutBtn: { 
+    width: 44, height: 44, 
+    borderRadius: 22, backgroundColor: '#FFFFFF',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#EAD9C9',
+  },
 
-  // Hero card
   heroCard: {
-    backgroundColor: C.card,
-    borderRadius: 24, padding: 24, marginBottom: 16,
-    borderWidth: 1, borderColor: C.border,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+    borderRadius: 28, padding: 25, marginBottom: 20,
+    borderWidth: 1, borderColor: '#EAD9C9',
+    overflow: 'hidden',
+    shadowColor: '#3D1C0C', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08, shadowRadius: 20, elevation: 4,
   },
-  heroTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
-  heroName:   { fontFamily: 'Poppins_600SemiBold', fontSize: 18, color: C.primary },
-  heroEmail:  { fontFamily: 'Poppins_400Regular', fontSize: 13, color: C.muted, marginTop: 2 },
+  heroTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 25 },
+  heroName:   { fontFamily: 'Poppins_600SemiBold', fontSize: 20, color: '#3D1C0C' },
+  heroEmail:  { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#7A5C4D', opacity: 0.8 },
   tierBadge:  {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6,
   },
-  tierBadgeTxt: { fontFamily: 'Poppins_600SemiBold', fontSize: 12 },
-  progressLabelRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  tierBadgeTxt: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, color: '#FFFFFF' },
 
-  pointsRow: { alignItems: 'center', marginBottom: 24 },
+  pointsRow: { alignItems: 'center', marginBottom: 25 },
   pointsNum: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 56, color: C.primary, lineHeight: 64,
+    fontSize: 58, color: '#3D1C0C',
   },
   pointsLabel: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 13, color: C.muted, marginTop: 2,
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 12, color: '#7A5C4D', textTransform: 'uppercase', letterSpacing: 1,
   },
 
-  progressSection: { gap: 10 },
+  progressSection: { gap: 12 },
   progressTrack: {
-    height: 8, backgroundColor: C.bg,
-    borderRadius: 4, overflow: 'hidden',
+    height: 10, backgroundColor: 'rgba(255,255,255,0.5)',
+    borderRadius: 5, overflow: 'hidden',
   },
-  progressFill:  { height: '100%', borderRadius: 4 },
+  progressFill:  { height: '100%', borderRadius: 5 },
   progressLabel: {
     fontFamily: 'Poppins_400Regular',
-    fontSize: 12, color: C.muted, textAlign: 'center',
+    fontSize: 12, color: '#5C3221', textAlign: 'center', opacity: 0.9,
   },
 
-  // Stats
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   statCard: {
-    flex: 1, backgroundColor: C.card, borderRadius: 16,
-    padding: 16, alignItems: 'center', gap: 6,
-    borderWidth: 1, borderColor: C.border,
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20,
+    padding: 16, alignItems: 'center', gap: 8,
+    borderWidth: 1, borderColor: '#EAD9C9',
   },
-  statVal: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 18, color: C.primary,
+  statIconCircle: {
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
   },
-  statLbl: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 9, color: C.muted, textAlign: 'center',
-  },
+  statVal: { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 18, color: '#3D1C0C' },
+  statLbl: { fontFamily: 'Poppins_400Regular', fontSize: 10, color: '#7A5C4D' },
 
-  // Actions
-  actionsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  actionsRow: { flexDirection: 'row', gap: 12, marginBottom: 25 },
   actionBtnPrimary: {
-    flex: 1.4, backgroundColor: C.primary, borderRadius: 16, height: 56,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, shadowRadius: 12, elevation: 6,
+    flex: 1.5, backgroundColor: '#5C3221', borderRadius: 20, height: 60,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    shadowColor: '#5C3221', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25, shadowRadius: 15, elevation: 8,
   },
-  actionBtnPrimaryTxt: {
-    fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#FFFFFF',
-  },
+  actionBtnPrimaryTxt: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#FFFFFF' },
   actionBtnSecondary: {
-    flex: 1, backgroundColor: C.card, borderRadius: 16, height: 56,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderWidth: 2, borderColor: C.primary,
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, height: 60,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    borderWidth: 2, borderColor: '#5C3221',
   },
-  actionBtnSecondaryTxt: {
-    fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: C.primary,
-  },
+  actionBtnSecondaryTxt: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: '#5C3221' },
 
-  // Section
-  section:       { marginBottom: 20 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: {
-    fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: C.primary,
-  },
-  seeAll: {
-    fontFamily: 'Poppins_400Regular', fontSize: 14, color: C.accent,
-  },
+  section:       { marginBottom: 25 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  sectionTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 17, color: '#3D1C0C' },
+  seeAll: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#C09891' },
 
-  histList: { gap: 10 },
+  histList: { gap: 12 },
   histRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: C.card, borderRadius: 16, padding: 14,
-    borderWidth: 1, borderColor: C.border,
+    flexDirection: 'row', alignItems: 'center', gap: 15,
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 15,
+    borderWidth: 1, borderColor: '#EAD9C9',
   },
-  histIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  histIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   histBody:  { flex: 1 },
-  histDesc: {
-    fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: C.primary,
-  },
-  histDate: {
-    fontFamily: 'Poppins_400Regular', fontSize: 12, color: C.muted, marginTop: 2,
-  },
-  histPts: {
-    fontFamily: 'Poppins_600SemiBold', fontSize: 15,
-  },
+  histDesc: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: '#3D1C0C' },
+  histDate: { fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#B89A87', marginTop: 2 },
+  histPts: { fontFamily: 'Poppins_700Bold', fontSize: 16 },
 
-  emptyState: { alignItems: 'center', padding: 32, gap: 12 },
-  emptyText: {
-    fontFamily: 'Poppins_400Regular', fontSize: 14, color: C.muted,
-    textAlign: 'center', lineHeight: 22,
-  },
+  emptyState: { alignItems: 'center', paddingVertical: 40, gap: 15 },
+  emptyIconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EAD9C9' },
+  emptyText: { fontFamily: 'Poppins_400Regular', fontSize: 14, color: '#B89A87', textAlign: 'center', width: '80%' },
 
-  // Tier info
   tierInfoCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    backgroundColor: C.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 18,
+    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20,
+    borderWidth: 1, borderColor: '#EAD9C9', overflow: 'hidden',
   },
-  tierInfoIcon: {
-    width: 52, height: 52, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: C.border,
-  },
-  tierInfoName: {
-    fontFamily: 'Poppins_600SemiBold', fontSize: 15, marginBottom: 4,
-  },
-  tierInfoDesc: {
-    fontFamily: 'Poppins_400Regular', fontSize: 13, color: C.muted,
-  },
+  tierInfoIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EAD9C9' },
+  tierInfoName: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, color: '#3D1C0C', marginBottom: 4 },
+  tierInfoDesc: { fontFamily: 'Poppins_400Regular', fontSize: 13, color: '#7A5C4D', lineHeight: 18 },
 });

@@ -3,26 +3,32 @@ const Parser = require('rss-parser');
 // RSS feeds per category
 const FEEDS = {
   general:    ['https://www.aljazeera.net/aljazeerarss/all/rss.xml'],
-  // sports: prioritize reliable international sports feeds
   sports:     [
-    'https://www.skysports.com/rss/12040',        // Sky Sports (International)
-    'https://fr.hespress.com/sport/feed',         // Hespress Sport (Regional/French)
-    'https://www.aljazeera.net/aljazeerarss/sports/rss.xml' // Al Jazeera Sports
+    'https://www.beinsports.com/fr/rss/news',         // beIN Sports (Updated URL)
+    'https://www.lequipe.fr/rss/actu_rss.xml',       // L'Équipe
+    'https://www.eurosport.fr/rss.xml',              // Eurosport
+    'https://fr.hespress.com/sport/feed',            // Hespress Sport
   ],
   technology: ['https://www.aljazeera.net/aljazeerarss/technology/rss.xml'],
 };
 
-// Cache TTL: 2 hours
-const CACHE_TTL = 2 * 60 * 60 * 1000;
+// Cache TTL: 30 minutes (Reduced for better reactivity in dev)
+const CACHE_TTL = 30 * 60 * 1000;
 
 class NewsService {
   constructor() {
-    this.parser = new Parser();
+    this.parser = new Parser({
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+      },
+      timeout: 8000, // 8s timeout
+    });
     this.cache = {};  // { category: { data, timestamp } }
   }
 
   /**
-   * Fetch articles by category — uses in-memory cache (2h TTL)
+   * Fetch articles by category
    */
   async fetch(category = 'general', limit = 20) {
     const cached = this.cache[category];
@@ -33,22 +39,29 @@ class NewsService {
     const feedUrls = FEEDS[category] || FEEDS.general;
     const articles = [];
 
+    console.log(`[NewsService] Fetching ${category} news from ${feedUrls.length} sources...`);
+
     for (const url of feedUrls) {
       try {
         const feed = await this.parser.parseURL(url);
+        console.log(`[NewsService] ✅ Success: ${feed.title || url} (${feed.items.length} items)`);
+        
         articles.push(
           ...feed.items.map(item => ({
             title: item.title,
             link: item.link,
             pubDate: item.pubDate,
-            contentSnippet: item.contentSnippet || '',
-            source: feed.title || url,
+            contentSnippet: (item.contentSnippet || item.content || '').substring(0, 200),
+            source: feed.title || 'Sport News',
           }))
         );
       } catch (err) {
-        // Graceful degradation — skip failed feeds
-        console.warn(`⚠️ RSS feed failed (${url}):`, err.message);
+        console.warn(`[NewsService] ⚠️ Failed feed (${url}):`, err.message);
       }
+    }
+
+    if (articles.length === 0) {
+      console.error(`[NewsService] ❌ No articles found for category: ${category}`);
     }
 
     // Sort by date descending

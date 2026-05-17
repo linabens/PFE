@@ -7,7 +7,6 @@ import * as Haptics from 'expo-haptics';
 import { menuApi } from '../../src/api/menuApi';
 import { useMenuStore } from '../../src/store/useMenuStore';
 import { useCartStore } from '../../src/store/useCartStore';
-import ChatFAB from '../../src/components/ChatFAB';
 import ProductImageFallback from '../../src/components/ui/ProductImageFallback';
 
 const { width } = Dimensions.get('window');
@@ -214,8 +213,7 @@ export default function PremiumMenuScreen() {
           )}
         />
       )}
-      <ChatFAB />
-    </SafeAreaView>
+      </SafeAreaView>
   );
 }
 

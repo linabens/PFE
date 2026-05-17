@@ -5,11 +5,12 @@ const config = require('../config');
  * Global error handling middleware
  */
 const errorHandler = (err, req, res, next) => {
-  // Log the error (Mute stack trace for JWT expiration/invalidity as they are common)
+  // Log the error
+  const isAuthError = err.statusCode === 401 || err.statusCode === 403;
   const isJwtError = err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError';
   
-  if (isJwtError) {
-    logger.warn(`Auth Error: ${err.message} [${req.method} ${req.path}]`);
+  if (isAuthError || isJwtError) {
+    logger.warn(`${isAuthError ? 'Auth' : 'JWT'} Error: ${err.message} [${req.method} ${req.path}]`);
   } else {
     logger.error('Error occurred:', {
       error: err.message,

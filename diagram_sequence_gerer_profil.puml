@@ -1,0 +1,114 @@
+@startuml DiagrammeSequenceGererProfil
+
+title Diagramme de Séquence - Gérer son profil\nSprint 1
+
+actor Utilisateur
+participant "ProfilePage\n(Frontend)" as ProfilePage
+participant "AuthController\n(Backend)" as AuthController
+participant "AuthService\n(Backend)" as AuthService
+participant "UserModel\n(Backend)" as UserModel
+database "Base de Données" as Database
+
+Utilisateur -> ProfilePage: Clique sur "Profil"\n(dans le menu)
+note over ProfilePage
+    L'état du profil est chargé
+    depuis le store (appStore)
+    full_name, phone, avatar
+end note
+ProfilePage --> Utilisateur: Affiche page profil\navec infos actuelles
+
+Utilisateur -> ProfilePage: Modifie son nom\nou son téléphone\nou choisit un avatar
+Utilisateur -> ProfilePage: Clique sur "Enregistrer"
+
+ProfilePage -> AuthController: PATCH /api/auth/profile\n{full_name, phone, avatar}
+activate AuthController
+
+AuthController -> AuthController: Valider champs allowed\n(full_name, phone, avatar)
+note over AuthController
+    Filtre les champs autorisés
+    Rejette les autres champs
+end note
+
+AuthController -> UserModel: update(userId, updates)
+activate UserModel
+
+UserModel -> Database: UPDATE users\nSET full_name = ?, phone = ?, avatar = ?\nWHERE id = ?
+activate Database
+Database --> UserModel: Mise à jour réussie\nRetour enregistrement complet
+deactivate Database
+
+UserModel --> AuthController: Utilisateur mis à jour\n(sans password_hash, security_answer)
+deactivate UserModel
+
+AuthController --> ProfilePage: Réponse succès (200)\n{success: true, data: profil}
+deactivate AuthController
+
+ProfilePage -> ProfilePage: updateUser(profile)\ndans appStore
+ProfilePage --> Utilisateur: Affiche confirmation\n"Profil mis à jour avec succès"
+
+note over Utilisateur, Database
+    Étape 2 : Changer le mot de passe (optionnel)
+end note
+
+Utilisateur -> ProfilePage: Saisit mot de passe actuel
+Utilisateur -> ProfilePage: Saisit nouveau mot de passe
+Utilisateur -> ProfilePage: Confirme nouveau mot de passe
+Utilisateur -> ProfilePage: Clique sur "Changer le mot de passe"
+
+ProfilePage -> ProfilePage: Validation client\n- Tous les champs remplis\n- nouveau == confirmation\n- length >= 6 caractères
+
+alt Validation client échouée
+    ProfilePage --> Utilisateur: Affiche message d'erreur\n(toast error)
+else Validation client réussie
+    ProfilePage -> AuthController: PATCH /api/auth/profile/password\n{currentPassword, newPassword}
+    activate AuthController
+
+    AuthController -> AuthService: changePassword(userId, currentPassword, newPassword)
+    activate AuthService
+
+    AuthService -> UserModel: findById(userId)
+    activate UserModel
+
+    UserModel -> Database: SELECT * FROM users WHERE id = ?
+    activate Database
+    Database --> UserModel: Enregistrement utilisateur
+    deactivate Database
+    UserModel --> AuthService: Utilisateur avec password_hash
+    deactivate UserModel
+
+    AuthService -> AuthService: Vérifier mot de passe actuel\nbcrypt.compare(currentPassword, password_hash)
+
+    alt Mot de passe actuel incorrect
+        note over AuthService
+            compare() retourne false
+        end note
+        AuthService --> AuthController: Erreur (400)\n"Current password is incorrect"
+        deactivate AuthService
+        AuthController --> ProfilePage: Réponse erreur (400)
+        deactivate AuthController
+        ProfilePage --> Utilisateur: Affiche message d'erreur\n"Mot de passe actuel incorrect"
+    else Mot de passe actuel correct
+        AuthService -> AuthService: Hasher nouveau mot de passe\nbcrypt.hash(newPassword, 10)
+
+        AuthService -> UserModel: update(userId, {password_hash})
+        activate UserModel
+
+        UserModel -> Database: UPDATE users SET password_hash = ?\nWHERE id = ?
+        activate Database
+        Database --> UserModel: Mise à jour réussie
+        deactivate Database
+        UserModel --> AuthService: Succès
+        deactivate UserModel
+
+        AuthService --> AuthController: {success: true}
+        deactivate AuthService
+
+        AuthController --> ProfilePage: Réponse succès (200)\n{success: true, message: "..."}
+        deactivate AuthController
+
+        ProfilePage -> ProfilePage: Réinitialiser formulaire\npasswords = {}
+        ProfilePage --> Utilisateur: Affiche confirmation\n"Mot de passe modifié avec succès"
+    end
+end
+
+@enduml

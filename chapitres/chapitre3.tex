@@ -1,0 +1,462 @@
+\chapter{Release 1}
+
+\section{Introduction}
+
+Ce chapitre présente la première release du projet Coffee Time, couvrant les deux premiers sprints réalisés durant le développement de l'application.
+
+Le Sprint 1 est consacré à la mise en place du système d'authentification et de gestion des accès pour les utilisateurs Admin et Staff. Il inclut également la gestion des profils.
+
+Le Sprint 2 représente le cœur fonctionnel de l'application cliente. Il couvre l'ensemble du parcours de commande, depuis le scan du QR code jusqu'au suivi de la commande et la génération de la facture.
+
+Pour chaque sprint, nous présentons les objectifs, le backlog, l'analyse, la conception ainsi que la réalisation des différentes fonctionnalités développées.
+
+%=========================================================
+\section{Sprint 1 : Authentification et gestion des accès}
+%=========================================================
+
+\subsection{Objectif du Sprint 1}
+
+Ce sprint a pour objectif de mettre en place le module d'authentification sécurisé de l'application. Il permet aux utilisateurs Admin et Staff de s'authentifier afin d'accéder à leurs espaces respectifs selon leurs rôles. Le système repose sur une architecture de sécurité basée sur les tokens JWT et le contrôle d'accès par rôle (RBAC).
+
+%=========================================================
+\subsection{Backlog du Sprint 1}
+%=========================================================
+
+\begin{table}[H]
+\centering
+\caption{Backlog du Sprint 1 — Authentification et gestion des accès}
+\renewcommand{\arraystretch}{1.4}
+\small
+\begin{tabular}{|p{1cm}|p{2.7cm}|p{6.2cm}|p{1.5cm}|p{1.5cm}|}
+\hline
+\textbf{Id} & \textbf{Features} & \textbf{User Stories} & \textbf{Priority} & \textbf{Complexity} \\
+\hline
+US01 & Authentification & En tant qu'utilisateur, je veux m'authentifier afin d'accéder à mon tableau de bord selon mon rôle. & Haute & Moyenne \\
+\hline
+US02 & Récupération mot de passe & En tant qu'utilisateur, je veux récupérer mon mot de passe oublié afin de retrouver l'accès à mon compte. & Haute & Moyenne \\
+\hline
+US03 & Gestion du profil & En tant qu'utilisateur, je veux modifier mes informations personnelles afin de garder mon profil à jour. & Moyenne & Faible \\
+\hline
+\end{tabular}
+\end{table}
+
+%=========================================================
+\subsection{Analyse du Sprint 1}
+%=========================================================
+
+\subsubsection{Diagramme de cas d'utilisation}
+
+Le diagramme suivant illustre les interactions entre les acteurs Admin et Staff et le système d'authentification. L'approche \textbf{RBAC (Role-Based Access Control)} est appliquée : chaque acteur dispose de droits d'accès définis selon son rôle, encodé dans le jeton \textbf{JWT} généré lors de la connexion.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/uc_sprint1.png}
+\caption{Diagramme de cas d'utilisation — Sprint 1}
+\label{fig:usecaseSprint1}
+\end{figure}
+
+%=========================================================
+\subsubsection{Raffinement des cas d'utilisation}
+%=========================================================
+
+Nous présentons ci-dessous la description textuelle détaillée pour les deux cas d'utilisation principaux de ce sprint.
+
+% ---- Raffinement A : S'authentifier ----
+\paragraph{A- Raffinement du cas d'utilisation « S'authentifier »}
+
+Dans cette étape, nous allons illustrer le diagramme de cas d'utilisation « s'authentifier » qui est présenté dans la figure ci-dessous et est suivi par une description textuelle.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/uc_sprint1.png}
+\caption{Raffinement de cas d'utilisation « s'authentifier »}
+\label{fig:uc_auth}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Description textuelle de cas d'utilisation « s'authentifier »}
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle — S'authentifier}
+\renewcommand{\arraystretch}{1.5}
+\small
+\begin{tabular}{|p{3.8cm}|p{10.2cm}|}
+\hline
+\textbf{Cas d'utilisation} & S'authentifier \\
+\hline
+\textbf{Acteur} & Admin, Staff \\
+\hline
+\textbf{Pré condition} & L'utilisateur possède un compte actif dans le système. \\
+\hline
+\textbf{Post condition} & L'utilisateur est connecté et le token est stocké pour les requêtes futures. \\
+\hline
+\textbf{Description de scénario principal} &
+- L'utilisateur accède au portail d'administration. \newline
+- Il saisit son adresse email et son mot de passe. \newline
+- Il clique sur le bouton « Se connecter ». \newline
+- Le système vérifie les identifiants en base de données. \newline
+- Le système génère un token JWT contenant l'ID et le rôle de l'utilisateur. \newline
+- L'utilisateur est redirigé vers son tableau de bord selon son rôle (Admin ou Staff). \\
+\hline
+\end{tabular}
+\end{table}
+
+% ---- Raffinement B : Récupérer mot de passe ----
+\paragraph{B- Raffinement du cas d'utilisation « Récupérer le mot de passe »}
+
+Dans cette étape, nous allons illustrer le diagramme de cas d'utilisation « récupérer le mot de passe » qui est présenté dans la figure ci-dessous et est suivi par une description textuelle.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/uc_sprint1.png}
+\caption{Raffinement de cas d'utilisation « récupérer le mot de passe »}
+\label{fig:uc_mdp}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Description textuelle de cas d'utilisation « récupérer le mot de passe »}
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle — Récupérer le mot de passe}
+\renewcommand{\arraystretch}{1.5}
+\small
+\begin{tabular}{|p{3.8cm}|p{10.2cm}|}
+\hline
+\textbf{Cas d'utilisation} & Récupérer le mot de passe \\
+\hline
+\textbf{Acteur} & Admin, Staff \\
+\hline
+\textbf{Pré condition} & L'utilisateur possède un compte associé à une adresse email valide. \\
+\hline
+\textbf{Post condition} & Le mot de passe est réinitialisé et l'utilisateur est redirigé vers la connexion. \\
+\hline
+\textbf{Description de scénario principal} &
+- L'utilisateur clique sur « Mot de passe oublié ? ». \newline
+- Il saisit son adresse email. \newline
+- Le système vérifie l'email et envoie un code de validation à 6 chiffres. \newline
+- L'utilisateur saisit le code reçu. \newline
+- Le système valide le code et autorise la réinitialisation via un token temporaire. \newline
+- L'utilisateur saisit son nouveau mot de passe et confirme. \newline
+- Le système met à jour le mot de passe en base de données. \\
+\hline
+\end{tabular}
+\end{table}
+
+%=========================================================
+\subsection{Conception du Sprint 1}
+%=========================================================
+
+\subsubsection{Diagramme de classes}
+Le diagramme suivant présente les entités liées à la gestion des utilisateurs et des tokens d'authentification.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/sprint1.png}
+\caption{Diagramme de classes — Sprint 1}
+\label{fig:classSprint1}
+\end{figure}
+
+\subsubsection{Diagrammes de séquence}
+
+Les diagrammes suivants modélisent les flux d'interaction entre les acteurs et le système pour les deux cas d'utilisation principaux du Sprint 1.
+
+\paragraph{S'authentifier}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/seq_authentifier.png}
+\caption{Diagramme de séquence — S'authentifier}
+\label{fig:seqAuth}
+\end{figure}
+
+\paragraph{Récupérer le mot de passe}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/seq_recuperer_mdp.png}
+\caption{Diagramme de séquence — Récupérer le mot de passe}
+\label{fig:seqMdp}
+\end{figure}
+
+%=========================================================
+\subsection{Réalisation du Sprint 1}
+%=========================================================
+
+Les figures suivantes présentent les interfaces développées à l'issue du Sprint 1.
+
+\subsubsection{Interface de connexion}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{images/login_ui.png}
+\caption{Interface de connexion (Admin / Staff)}
+\label{fig:loginUI}
+\end{figure}
+
+\subsubsection{Interface de récupération du mot de passe}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{images/forgot_password_ui.png}
+\caption{Interface de récupération du mot de passe}
+\label{fig:forgotUI}
+\end{figure}
+
+\subsubsection{Interface de gestion du profil}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{images/profile_ui.png}
+\caption{Interface de gestion du profil}
+\label{fig:profileUI}
+\end{figure}
+
+\newpage
+%=========================================================
+\section{Sprint 2 : Commandes et menu}
+%=========================================================
+
+\subsection{Objectif du Sprint 2}
+
+Ce sprint représente le cœur fonctionnel de l'application cliente. Il couvre l'ensemble du processus de commande depuis le scan du QR code jusqu'au suivi de la commande et la génération de la facture.
+
+L'objectif principal est de permettre au client de :
+\begin{itemize}
+\item consulter le menu ;
+\item gérer son panier ;
+\item passer une commande ;
+\item suivre l'état de sa commande en temps réel.
+\end{itemize}
+
+%=========================================================
+\subsection{Backlog du Sprint 2}
+%=========================================================
+
+\begin{table}[H]
+\centering
+\caption{Backlog du Sprint 2 — Commandes et menu}
+\renewcommand{\arraystretch}{1.3}
+\small
+\begin{tabular}{|p{1cm}|p{2.7cm}|p{6.5cm}|p{1.5cm}|p{2cm}|}
+\hline
+\textbf{Id} & \textbf{Features} & \textbf{User Stories} & \textbf{Priority} & \textbf{Complexity} \\
+\hline
+US04 & Session QR Code & En tant que client, je veux scanner un QR code afin de démarrer une session. & Haute & Moyenne \\
+\hline
+US05 & Consultation menu & En tant que client, je veux consulter les produits disponibles afin de choisir ma commande. & Haute & Moyenne \\
+\hline
+US06 & Gestion panier & En tant que client, je veux gérer mon panier afin de préparer ma commande. & Haute & Élevée \\
+\hline
+US07 & Confirmation commande & En tant que client, je veux confirmer ma commande afin qu'elle soit transmise au Staff. & Haute & Moyenne \\
+\hline
+US08 & Suivi commande & En tant que client, je veux suivre l'état de ma commande en temps réel. & Haute & Moyenne \\
+\hline
+US09 & Appel serveur & En tant que client, je veux appeler un serveur afin d'obtenir de l'aide. & Moyenne & Faible \\
+\hline
+US10 & Facture & En tant que client, je veux consulter ma facture afin d'avoir un récapitulatif de mes achats. & Moyenne & Faible \\
+\hline
+\end{tabular}
+\end{table}
+
+%=========================================================
+\subsection{Analyse du Sprint 2}
+%=========================================================
+
+\subsubsection{Diagramme de cas d'utilisation}
+
+Le diagramme suivant illustre les interactions entre les acteurs et le système dans le cadre du Sprint 2.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{images/uc_sprint2.png}
+\caption{Diagramme de cas d'utilisation — Sprint 2}
+\label{fig:usecaseSprint2}
+\end{figure}
+
+%=========================================================
+\subsubsection{Raffinement des cas d'utilisation}
+%=========================================================
+
+Nous présentons la description textuelle détaillée pour les deux cas d'utilisation les plus critiques du Sprint 2.
+
+% ---- Raffinement C : Gestion du panier ----
+\paragraph{C- Raffinement du cas d'utilisation « Gérer le panier »}
+
+Dans cette étape, nous allons illustrer le diagramme de cas d'utilisation « gérer le panier » qui est présenté dans la figure ci-dessous et est suivi par une description textuelle.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/uc_panier.png}
+\caption{Raffinement de cas d'utilisation « gérer le panier »}
+\label{fig:uc_panier}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Description textuelle de cas d'utilisation « gérer le panier »}
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle — Gérer le panier}
+\renewcommand{\arraystretch}{1.5}
+\small
+\begin{tabular}{|p{3.8cm}|p{10.2cm}|}
+\hline
+\textbf{Cas d'utilisation} & Gérer le panier \\
+\hline
+\textbf{Acteur} & Client \\
+\hline
+\textbf{Pré condition} & Le client dispose d'une session active et a consulté le menu. \\
+\hline
+\textbf{Post condition} & Le panier est mis à jour et persisté localement (AsyncStorage). \\
+\hline
+\textbf{Description de scénario principal} &
+- Le client sélectionne un produit depuis le menu et clique sur « Ajouter ». \newline
+- Le système vérifie si l'article est déjà dans le panier. \newline
+- Si l'article existe déjà, sa quantité est incrémentée automatiquement. \newline
+- Sinon, l'article est ajouté comme un nouvel élément du panier. \newline
+- Le client peut modifier la quantité ou supprimer un article. \newline
+- Si la quantité passe à zéro, l'article est automatiquement supprimé. \newline
+- Le total est recalculé automatiquement à chaque modification. \\
+\hline
+\end{tabular}
+\end{table}
+
+% ---- Raffinement D : Passer une commande ----
+\paragraph{D- Raffinement du cas d'utilisation « Passer une commande »}
+
+Dans cette étape, nous allons illustrer le diagramme de cas d'utilisation « passer une commande » qui est présenté dans la figure ci-dessous et est suivi par une description textuelle.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{images/uc_sprint2.png}
+\caption{Raffinement de cas d'utilisation « passer une commande »}
+\label{fig:uc_order}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Description textuelle de cas d'utilisation « passer une commande »}
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Description textuelle — Passer une commande}
+\renewcommand{\arraystretch}{1.5}
+\small
+\begin{tabular}{|p{3.8cm}|p{10.2cm}|}
+\hline
+\textbf{Cas d'utilisation} & Passer une commande \\
+\hline
+\textbf{Acteur} & Client \\
+\hline
+\textbf{Pré condition} & Le client dispose d'une session active et a ajouté au moins un produit à son panier. \\
+\hline
+\textbf{Post condition} & La commande est enregistrée en base de données. Le Staff est notifié et peut commencer la préparation. \\
+\hline
+\textbf{Description de scénario principal} &
+- Le client consulte son panier et vérifie les articles sélectionnés. \newline
+- Il clique sur « Commander ». \newline
+- Le système enregistre la commande en base de données avec le statut « En attente ». \newline
+- Le Staff reçoit une notification en temps réel via Socket.IO. \newline
+- Le client reçoit une confirmation avec le numéro de sa commande. \\
+\hline
+\end{tabular}
+\end{table}
+
+%=========================================================
+\subsection{Conception du Sprint 2}
+%=========================================================
+
+\subsubsection{Diagramme de classes}
+Le diagramme de classes suivant présente les principales entités utilisées dans le Sprint 2.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/sprint2.png}
+\caption{Diagramme de classes — Sprint 2}
+\label{fig:classSprint2}
+\end{figure}
+
+\subsubsection{Diagrammes de séquence}
+
+\paragraph{A- Diagramme de séquence « Scanner le QR Code »}
+La figure \ref{fig:seqQR} illustre le flux d'interaction permettant de démarrer une session client en scannant le QR code d'une table, incluant la validation du code et l'initialisation de la session anonyme.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/scan_qr_code.png}
+\caption{Diagramme de séquence — Scanner QR Code}
+\label{fig:seqQR}
+\end{figure}
+
+\paragraph{B- Diagramme de séquence « Passer une commande »}
+La figure \ref{fig:seqOrder} détaille le processus complet de création d'une commande par le client, de la vérification de la disponibilité des produits jusqu'à l'enregistrement en base de données et la notification en temps réel du personnel.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/passer_commande.png}
+\caption{Diagramme de séquence — Passer une commande}
+\label{fig:seqOrder}
+\end{figure}
+
+\paragraph{Suivre une commande}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/suivi_de_commande.png}
+\caption{Diagramme de séquence — Suivi de commande}
+\label{fig:seqTracking}
+\end{figure}
+
+%=========================================================
+\subsection{Réalisation du Sprint 2}
+%=========================================================
+
+\subsubsection{Interface de scan QR Code}
+La figure suivante présente l'interface de scan du QR code.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/scan_ui.png}
+\caption{Interface de scan QR Code}
+\label{fig:qrUI}
+\end{figure}
+
+\subsubsection{Interface du menu}
+La figure suivante présente l'interface de consultation du menu.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/menu_ui.png}
+\caption{Interface de consultation du menu}
+\label{fig:menuUI}
+\end{figure}
+
+\subsubsection{Interface du panier}
+La figure suivante présente l'interface de gestion du panier.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/cart_ui.png}
+\caption{Interface de gestion du panier}
+\label{fig:cartUI}
+\end{figure}
+
+\subsubsection{Interface du suivi de commande}
+La figure suivante présente l'interface de suivi des commandes en temps réel.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/tracking_ui.png}
+\caption{Interface de suivi de commande}
+\label{fig:trackingUI}
+\end{figure}
+
+\subsubsection{Interface de génération de facture}
+La figure suivante présente l'interface de génération de facture PDF.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/invoice_ui.png}
+\caption{Interface de génération de facture}
+\label{fig:invoiceUI}
+\end{figure}
+
+%=========================================================
+\section*{Conclusion}
+%=========================================================
+
+Dans ce chapitre, nous avons présenté la première release du projet Coffee Time couvrant les deux premiers sprints. Le Sprint 1 a mis en place le système d'authentification sécurisé avec contrôle d'accès par rôle (RBAC), et le Sprint 2 a réalisé le parcours complet du client de la commande à la facturation. Le prochain chapitre couvrira la deuxième release incluant les services avancés (Dashboard, IA, Jeux).

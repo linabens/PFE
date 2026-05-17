@@ -27,8 +27,9 @@ const C = {
 };
 
 const FONT = {
-  playfair: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-  poppins: Platform.OS === 'ios' ? 'System' : 'sans-serif'
+  playfair:    Platform.OS === 'ios' ? 'Georgia' : 'serif',
+  poppins:     Platform.OS === 'ios' ? 'System'  : 'sans-serif',
+  poppinsSemi: Platform.OS === 'ios' ? 'System'  : 'sans-serif',
 };
 
 const SwipeableItem = ({ item, onRemove, onUpdateQuantity }) => {
@@ -80,7 +81,7 @@ const SwipeableItem = ({ item, onRemove, onUpdateQuantity }) => {
               style={styles.qtyBtn} 
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                if (item.quantity <= 1) onRemove(item.id);
+                if (item.quantity <= 1) onRemove();
                 else onUpdateQuantity(item.id, item.quantity - 1);
               }}
             >
@@ -178,9 +179,13 @@ export default function CartBottomSheet() {
     setIsCallingBill(true);
     try {
       // Reusing assistance API to request the bill
-      await assistanceApi.requestAssistance(tableId || 1); 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      alert("Le serveur a été notifié et vous apportera l'addition.");
+      const res = await assistanceApi.requestAssistance(tableId || 1); 
+      if (res.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        alert("Le serveur a été notifié et vous apportera l'addition.");
+      } else {
+        alert(res.error || "Erreur lors de la demande de l'addition.");
+      }
     } catch (e) {
       alert("Erreur lors de la demande de l'addition.");
     } finally {
@@ -216,13 +221,13 @@ export default function CartBottomSheet() {
             data={items}
             keyExtractor={(item, index) => `${item.id}-${index}`}
             renderItem={({ item }) => (
-              <SwipeableItem 
-                item={item} 
-                onRemove={(id) => {
+              <SwipeableItem
+                item={item}
+                onRemove={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  removeItem(id);
-                }} 
-                onUpdateQuantity={updateQuantity} 
+                  removeItem(item.id, item.options ?? []);
+                }}
+                onUpdateQuantity={(id, qty) => updateQuantity(id, qty, item.options ?? [])}
               />
             )}
             style={styles.list}

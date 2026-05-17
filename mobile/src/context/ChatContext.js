@@ -6,7 +6,7 @@ const ChatContext = createContext();
 const WELCOME_MESSAGE = {
   id: 'welcome',
   role: 'assistant',
-  content: "Bonjour ! Je suis Luna ☕, votre barista virtuelle chez BrewLuna. Je peux vous recommander des boissons, répondre à vos questions sur le menu, ou vous aider à choisir selon vos envies. Comment puis-je vous aider ?",
+  content: "Bonjour ! Je suis l'assistant Coffee Time ☕. Je peux vous recommander des boissons, répondre à vos questions sur le menu, ou vous aider à choisir selon vos envies. Comment puis-je vous aider ?",
   timestamp: new Date(),
   sources: [],
 };
@@ -26,7 +26,6 @@ export const ChatProvider = ({ children }) => {
   const sendMessage = useCallback(async (text) => {
     if (!text.trim()) return;
 
-    // 1. Append user bubble immediately
     const userMsg = {
       id: Date.now().toString(),
       role: 'user',
@@ -40,7 +39,7 @@ export const ChatProvider = ({ children }) => {
     try {
       const data = await sendChatMessage(text.trim());
 
-      const lunaMsg = {
+      const botMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.response,
@@ -48,9 +47,8 @@ export const ChatProvider = ({ children }) => {
         sources: data.sources || [],
         confidence: data.confidence,
       };
-      setMessages(prev => [...prev, lunaMsg].slice(-60));
+      setMessages(prev => [...prev, botMsg].slice(-60));
 
-      // Update quick replies based on context
       if (data.low_confidence) {
         setQuickReplies([
           "Voir tout le menu ☕",

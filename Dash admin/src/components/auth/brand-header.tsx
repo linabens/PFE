@@ -18,7 +18,7 @@ export function BrandHeader({
           }}
         />
         <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-deep-roast to-caramel shadow-lg">
-          <Coffee className="h-7 w-7 text-cream" strokeWidth={2} />
+          <Coffee className="h-7 w-7 text-white" strokeWidth={2} />
         </div>
       </div>
 
@@ -29,7 +29,7 @@ export function BrandHeader({
         Coffee Time
       </p>
       <h1
-        className="mt-1 font-serif text-3xl font-semibold text-cream animate-fade-up"
+        className="mt-1 font-serif text-3xl font-semibold text-white animate-fade-up"
         style={{
           fontFamily: "var(--font-playfair)",
           animationDelay: "120ms",
@@ -38,7 +38,7 @@ export function BrandHeader({
         {title}
       </h1>
       <p
-        className="mt-1 text-sm text-cream/70 animate-fade-up"
+        className="mt-1 text-sm text-white/80 animate-fade-up"
         style={{ animationDelay: "180ms" }}
       >
         {subtitle}

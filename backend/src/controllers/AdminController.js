@@ -315,6 +315,76 @@ class AdminController {
   }
 
   /**
+   * GET /api/admin/orders/completed-today
+   * Commandes complétées aujourd'hui (historique cuisine)
+   */
+  async completedToday(req, res, next) {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const result = await pool.query(`
+        SELECT
+          o.*,
+          t.table_number,
+          (
+            SELECT json_agg(json_build_object(
+              'name', p.name,
+              'quantity', oi.quantity,
+              'price', oi.unit_price
+            ))
+            FROM order_items oi
+            JOIN products p ON p.id = oi.product_id
+            WHERE oi.order_id = o.id
+          ) AS items,
+          EXTRACT(EPOCH FROM (o.completed_at - o.created_at) / 60)::int AS prep_minutes
+        FROM orders o
+        LEFT JOIN tables t ON t.id = o.table_id
+        WHERE o.status = 'completed'
+          AND DATE(o.completed_at) = $1
+        ORDER BY o.completed_at DESC
+        LIMIT 50
+      `, [today]);
+      res.json({ success: true, data: result.rows, count: result.rows.length });
+    } catch (err) { next(err); }
+  }
+
+  /**
+   * POST /api/admin/tables/:id/regenerate-qr
+   * Régénérer le QR code d'une table
+   */
+  async regenerateQr(req, res, next) {
+    try {
+      const TableService = require('../services/TableService');
+      const table = await TableService.regenerateQrCode(parseInt(req.params.id));
+      res.json({ success: true, data: table, message: `Nouveau QR généré : ${table.qr_code}` });
+    } catch (err) { next(err); }
+  }
+
+  /**
+   * GET /api/admin/tables/:id/history
+   * Historique des 20 dernières commandes d'une table
+   */
+  async tableHistory(req, res, next) {
+    try {
+      const result = await pool.query(`
+        SELECT
+          o.id, o.status, o.total_price, o.created_at, o.completed_at,
+          EXTRACT(EPOCH FROM (COALESCE(o.completed_at, NOW()) - o.created_at) / 60)::int AS duration_minutes,
+          (
+            SELECT json_agg(json_build_object('name', p.name, 'quantity', oi.quantity))
+            FROM order_items oi JOIN products p ON p.id = oi.product_id
+            WHERE oi.order_id = o.id
+          ) AS items
+        FROM orders o
+        JOIN tables t ON t.id = o.table_id
+        WHERE t.id = $1
+        ORDER BY o.created_at DESC
+        LIMIT 20
+      `, [req.params.id]);
+      res.json({ success: true, data: result.rows });
+    } catch (err) { next(err); }
+  }
+
+  /**
    * GET /api/admin/tables
    * Vue complète des tables : statut, commandes actives, QR code
    */

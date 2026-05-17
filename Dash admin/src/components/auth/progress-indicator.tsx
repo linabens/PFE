@@ -3,9 +3,11 @@
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const STEPS = ["Role", "Info", "Security", "Details"] as const
+const STEPS_4 = ["Role", "Info", "Security", "Details"] as const
+const STEPS_3 = ["Info", "Security", "Details"] as const
 
-export function ProgressIndicator({ current }: { current: 1 | 2 | 3 | 4 }) {
+export function ProgressIndicator({ current, total = 4 }: { current: number; total?: 3 | 4 }) {
+  const STEPS = total === 3 ? STEPS_3 : STEPS_4
   return (
     <div className="w-full">
       <ol
@@ -13,7 +15,7 @@ export function ProgressIndicator({ current }: { current: 1 | 2 | 3 | 4 }) {
         aria-label="Registration progress"
       >
         {STEPS.map((label, i) => {
-          const step = (i + 1) as 1 | 2 | 3 | 4
+          const step = i + 1
           const isDone = step < current
           const isActive = step === current
           return (

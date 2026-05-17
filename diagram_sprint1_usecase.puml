@@ -1,0 +1,59 @@
+@startuml DiagrammeUseCaseSprint1
+
+' --- Configuration visuelle ---
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam ArrowColor black
+skinparam ArrowThickness 1
+
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+  FontColor black
+  FontSize 12
+}
+
+skinparam actor {
+  BackgroundColor white
+  BorderColor black
+  FontColor black
+  FontSize 12
+}
+
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
+}
+
+left to right direction
+
+' --- Acteurs ---
+actor "Admin" as Admin
+actor "Staff" as Staff
+
+' --- Système ---
+rectangle "Système Coffee Time — Sprint 1" {
+  usecase UC1 as "S'authentifier"
+  usecase UC2 as "Récupérer mot\nde passe"
+  usecase UC3 as "Gérer son profil"
+  usecase UC3b as "Changer mot de\npasse"
+
+  ' --- Relations internes ---
+  ' Gérer profil nécessite d'être authentifié
+  UC3 .> UC1 : <<include>>
+  ' Gérer profil inclut le changement de mot de passe
+  UC3 .> UC3b : <<include>>
+}
+
+' --- Connexions Admin ---
+Admin -- UC1
+Admin -- UC2
+Admin -- UC3
+
+' --- Connexions Staff ---
+Staff -- UC1
+Staff -- UC2
+Staff -- UC3
+
+@enduml

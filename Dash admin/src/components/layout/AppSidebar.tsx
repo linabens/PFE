@@ -7,43 +7,44 @@ import {
   ChevronLeft, ChevronRight, LogOut, Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const navGroups = [
   {
     label: 'Overview',
     items: [
-      { title: 'Dashboard', path: '/', icon: LayoutDashboard },
-      { title: 'Live Orders', path: '/orders', icon: Activity, badge: 'orders' as const },
+      { title: 'sidebar.dashboard', path: '/', icon: LayoutDashboard },
+      { title: 'sidebar.orders', path: '/orders', icon: Activity, badge: 'orders' as const },
     ],
   },
   {
     label: 'Management',
     items: [
-      { title: 'Products', path: '/products', icon: Package, roles: ['admin'] },
-      { title: 'Categories', path: '/categories', icon: Grid3X3, roles: ['admin'] },
-      { title: 'Promotions', path: '/promotions', icon: Sparkles, roles: ['admin'] },
-      { title: 'Tables & QR', path: '/tables', icon: QrCode },
+      { title: 'sidebar.products', path: '/products', icon: Package, roles: ['admin'] },
+      { title: 'sidebar.categories', path: '/categories', icon: Grid3X3, roles: ['admin'] },
+      { title: 'sidebar.promotions', path: '/promotions', icon: Sparkles, roles: ['admin'] },
+      { title: 'sidebar.tables', path: '/tables', icon: QrCode },
     ],
   },
   {
     label: 'Customers',
     items: [
-      { title: 'Loyalty Program', path: '/loyalty', icon: Star },
-      { title: 'Assistance', path: '/assistance', icon: Bell, badge: 'assistance' as const },
+      { title: 'sidebar.loyalty', path: '/loyalty', icon: Star },
+      { title: 'sidebar.assistance', path: '/assistance', icon: Bell, badge: 'assistance' as const },
     ],
   },
   {
     label: 'Reports',
     items: [
-      { title: 'Revenue', path: '/revenue', icon: Banknote, roles: ['admin'] },
-      { title: 'Analytics', path: '/analytics', icon: BarChart3, roles: ['admin'] },
+      { title: 'sidebar.revenue', path: '/revenue', icon: Banknote, roles: ['admin'] },
+      { title: 'sidebar.analytics', path: '/analytics', icon: BarChart3, roles: ['admin'] },
     ],
   },
   {
     label: 'Settings',
     items: [
-      { title: 'Staff Accounts', path: '/staff', icon: Users, roles: ['admin'] },
-      { title: 'System', path: '/system', icon: Settings, roles: ['admin'] },
+      { title: 'sidebar.staff', path: '/staff', icon: Users, roles: ['admin'] },
+      { title: 'sidebar.profile', path: '/profile', icon: Settings },
     ],
   },
 ];
@@ -52,6 +53,11 @@ export default function AppSidebar() {
   const { sidebarCollapsed, toggleSidebar, orders, assistanceRequests, user, setUser } = useAppStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr');
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('coffee_admin_token');
@@ -98,12 +104,12 @@ export default function AppSidebar() {
               )
             ) : (
               <span className="text-xs font-semibold text-sidebar-primary">
-                {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                {user.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'CT'}
               </span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{user.full_name}</p>
+            <p className="text-sm font-medium text-sidebar-foreground truncate">{user.full_name || 'Admin'}</p>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-sidebar-primary/15 text-sidebar-primary font-medium uppercase tracking-widest">
               {user.role}
             </span>
@@ -121,7 +127,7 @@ export default function AppSidebar() {
             const roles = 'roles' in item ? (item as any).roles : undefined;
             return !roles || (user && roles.includes(user.role));
           });
-          
+
           if (visibleItems.length === 0) return null;
 
           return (
@@ -148,15 +154,15 @@ export default function AppSidebar() {
                   >
                     {isActive && <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-sidebar-primary rounded-r-full" />}
                     <item.icon className={cn('w-[18px] h-[18px] flex-shrink-0 transition-colors', isActive ? 'text-sidebar-primary' : 'group-hover:text-sidebar-primary')} />
-                    {!sidebarCollapsed && <span className={cn("flex-1 tracking-tight", isActive ? "font-semibold" : "font-medium")}>{item.title}</span>}
+                    {!sidebarCollapsed && <span className={cn("flex-1 tracking-tight", isActive ? "font-semibold" : "font-medium")}>{item.title.startsWith('sidebar.') ? t(item.title) : item.title}</span>}
                     {badge !== null && (
                       <span className={cn(
                         'text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg transition-all',
                         itemBadge === 'orders'
                           ? 'bg-primary text-white'
                           : 'bg-destructive text-white',
-                        sidebarCollapsed 
-                          ? 'absolute top-1.5 right-1.5 scale-90 border-2 border-sidebar shadow-xl' 
+                        sidebarCollapsed
+                          ? 'absolute top-1.5 right-1.5 scale-90 border-2 border-sidebar shadow-xl'
                           : 'relative ml-auto'
                       )}>
                         {badge}
@@ -165,6 +171,7 @@ export default function AppSidebar() {
                     {sidebarCollapsed && (
                       <div className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-sidebar text-sidebar-foreground text-xs opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all shadow-2xl border border-white/10 whitespace-nowrap z-50">
                         {item.title}
+                        {t(item.title)}
                       </div>
                     )}
                   </NavLink>
@@ -175,25 +182,46 @@ export default function AppSidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className={cn(
-          "flex items-center gap-3 px-6 py-4 border-t border-sidebar-border text-sidebar-foreground/60 hover:text-destructive transition-colors relative z-10",
-          sidebarCollapsed && "justify-center px-0"
-        )}
-      >
-        <LogOut className="w-[18px] h-[18px]" />
-        {!sidebarCollapsed && <span className="text-sm font-medium">Logout</span>}
-      </button>
+      {/* Footer Controls */}
+      <div className="p-4 border-t border-sidebar-border relative z-10 flex flex-col gap-2">
+        {/* Language Switcher */}
+        <button
+          onClick={toggleLanguage}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/5',
+            sidebarCollapsed && 'justify-center px-0'
+          )}
+        >
+          <div className="w-[18px] h-[18px] flex-shrink-0 font-display font-black text-[12px] uppercase border border-sidebar-foreground/30 rounded flex items-center justify-center">
+            {i18n.language.substring(0, 2)}
+          </div>
+          {!sidebarCollapsed && <span className="font-medium tracking-tight flex-1 text-left">{t('sidebar.language')}</span>}
+        </button>
 
-      {/* Collapse Toggle */}
-      <button
-        onClick={toggleSidebar}
-        className="flex items-center justify-center py-4 border-t border-sidebar-border text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors relative z-10"
-      >
-        {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </button>
+        {/* Toggle Collapse */}
+        <button
+          onClick={toggleSidebar}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5 hidden md:flex',
+            sidebarCollapsed && 'justify-center px-0'
+          )}
+        >
+          {sidebarCollapsed ? <ChevronRight className="w-[18px] h-[18px]" /> : <ChevronLeft className="w-[18px] h-[18px]" />}
+          {!sidebarCollapsed && <span className="font-medium tracking-tight flex-1 text-left">{t('sidebar.collapse')}</span>}
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-300 text-destructive/70 hover:text-destructive hover:bg-destructive/10',
+            sidebarCollapsed && 'justify-center px-0'
+          )}
+        >
+          <LogOut className="w-[18px] h-[18px]" />
+          {!sidebarCollapsed && <span className="font-medium tracking-tight flex-1 text-left">{t('sidebar.logout')}</span>}
+        </button>
+      </div>
     </aside>
   );
 }

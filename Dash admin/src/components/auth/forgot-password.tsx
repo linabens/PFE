@@ -34,7 +34,7 @@ export function ForgotPassword({
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const [question, setQuestion] = React.useState("")
+  const [message, setMessage] = React.useState<string | null>(null)
 
   async function handleRequestCode(e: React.FormEvent) {
     e.preventDefault()
@@ -45,8 +45,8 @@ export function ForgotPassword({
 
     setStatus("loading")
     try {
-      const response = await api.post<{ question: string }>("/auth/forgot-password", { email })
-      setQuestion(response.question)
+      const response = await api.post<{ message: string }>("/auth/forgot-password", { email })
+      setMessage(response.message)
       setStep("verify")
       setStatus("idle")
       setError(null)
@@ -123,8 +123,8 @@ export function ForgotPassword({
         <BrandHeader
           title={step === "success" ? "All Set!" : step === "reset" ? "New Password" : "Reset Password"}
           subtitle={
-            step === "email" ? "Enter your email to retrieve your security question" :
-              step === "verify" ? "Please answer your security question" :
+            step === "email" ? "Enter your email to receive a validation code" :
+              step === "verify" ? "Please enter the 6-digit validation code" :
                 step === "reset" ? "Enter your new credentials" :
                   "Your password has been reset"
           }
@@ -164,11 +164,13 @@ export function ForgotPassword({
         {step === "verify" && (
           <form onSubmit={handleVerifyCode} className="space-y-4">
             <div className="animate-fade-up">
-              <p className="mb-3 text-xs text-latte italic font-medium bg-white/5 p-3 rounded-xl border border-white/10">
-                {error && error.includes('Incorrect') ? 'Hint: Check your spelling' : `Question: ${question}`}
-              </p>
+              {message && (
+                <p className="mb-3 text-xs text-latte italic font-medium bg-white/5 p-3 rounded-xl border border-white/10 text-center">
+                  {message}
+                </p>
+              )}
               <AnimatedInput
-                label="Security Answer"
+                label="Validation Code"
                 type="text"
                 icon={<ShieldCheck className="h-4 w-4" />}
                 value={code}
@@ -177,7 +179,7 @@ export function ForgotPassword({
                   setError(null)
                 }}
                 error={error || undefined}
-                placeholder="Enter your answer"
+                placeholder="Ex: 123456"
               />
             </div>
             <button
@@ -188,15 +190,15 @@ export function ForgotPassword({
               {status === "loading" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Verify Answer"
+                "Verify Code"
               )}
             </button>
-            <p className="animate-fade-up text-center text-xs text-cream/40">
+            <p className="animate-fade-up text-center text-xs text-cream/60">
               Didn't get the code?{" "}
               <button
                 type="button"
                 onClick={handleRequestCode}
-                className="text-rosewood transition hover:text-latte"
+                className="text-rosewood font-medium transition hover:text-latte"
               >
                 Resend
               </button>

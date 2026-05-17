@@ -108,6 +108,26 @@ class LoyaltyController {
       res.json({ success: true, data });
     } catch (err) { next(err); }
   }
+
+  /**
+   * PUT /api/loyalty/:id (admin only)
+   */
+  async update(req, res, next) {
+    try {
+      const account = await LoyaltyService.updateAccount(parseInt(req.params.id), req.body);
+      res.json({ success: true, data: account });
+    } catch (err) { next(err); }
+  }
+
+  /**
+   * DELETE /api/loyalty/:id (admin only)
+   */
+  async delete(req, res, next) {
+    try {
+      await LoyaltyService.deleteAccount(parseInt(req.params.id));
+      res.json({ success: true, message: 'Compte fidélité supprimé avec succès' });
+    } catch (err) { next(err); }
+  }
 }
 
 module.exports = new LoyaltyController();

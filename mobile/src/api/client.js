@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../utils/constants';
+import { useSessionStore } from '../store/useSessionStore';
 
 /**
  * BREW LUNA — Axios Client for Native
@@ -35,8 +36,15 @@ client.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const status = error.response?.status;
-    let errorMessage = error.response?.data?.error || error.message || 'Server error';
+    const data = error.response?.data;
+    let errorMessage = data?.error || data?.message || error.message || 'Server error';
     
+    // Si la session est fermée ou expirée (401), on nettoie le store
+    if (status === 401 && (errorMessage.includes('Session') || errorMessage.includes('token') || errorMessage.includes('fermé'))) {
+      console.warn('Session error detected, clearing store:', errorMessage);
+      useSessionStore.getState().clearSession();
+    }
+
     if (status === 403) {
       errorMessage = 'Accès refusé';
     }

@@ -38,8 +38,8 @@ export const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputPro
           {icon ? (
             <span
               className={cn(
-                "mr-3 flex h-5 w-5 shrink-0 items-center justify-center text-cream/70 transition-colors",
-                focused && "text-rosewood",
+                "mr-3 flex h-5 w-5 shrink-0 items-center justify-center text-white/60 transition-colors",
+                focused && "text-white",
                 error && "text-[color:var(--error)]",
               )}
               aria-hidden="true"
@@ -51,9 +51,9 @@ export const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputPro
           <div className="relative flex-1 pt-5 pb-2">
             <span
               className={cn(
-                "pointer-events-none absolute left-0 origin-left text-cream/60 transition-all duration-200",
+                "pointer-events-none absolute left-0 origin-left text-white/70 transition-all duration-200",
                 floating
-                  ? "top-0 text-[11px] tracking-wide text-cream/70"
+                  ? "top-0 text-[11px] tracking-wide text-white/90"
                   : "top-1/2 -translate-y-1/2 text-sm",
               )}
             >
@@ -76,7 +76,7 @@ export const AnimatedInput = React.forwardRef<HTMLInputElement, AnimatedInputPro
                 props.onChange?.(e)
               }}
               className={cn(
-                "w-full bg-transparent text-sm text-cream outline-none placeholder:text-transparent",
+                "w-full bg-transparent text-sm text-white font-medium outline-none placeholder:text-transparent",
                 className,
               )}
               aria-invalid={!!error}

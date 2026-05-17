@@ -1,120 +1,180 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Platform, Animated } from 'react-native';
+import {
+  View, Text, StyleSheet, Image, TouchableOpacity,
+  ScrollView, Dimensions, ActivityIndicator, Platform, Animated,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ChevronLeft, Heart, Check, AlertCircle, Coffee, Snowflake } from 'lucide-react-native';
+import { ChevronLeft, Heart, Check, AlertCircle } from 'lucide-react-native';
 import ProductImageFallback from '../../src/components/ui/ProductImageFallback';
 import { useCartStore } from '../../src/store/useCartStore';
 import { menuApi } from '../../src/api/menuApi';
+import {
+  getConfig, buildInitialState, computeExtras, buildOptionsArray,
+} from '../../src/utils/customizationConfig';
 
 const { height } = Dimensions.get('window');
 
-// ============================================
-// WARM CREAM PALETTE (Synced with Home)
-// ============================================
 const C = {
-  bg: '#FAF3EB',       // cream warm
-  imgBg: '#F0E4D6',    // sand
-  border: '#EAD9C9',   // borders/separators
-  primary: '#5C3221',  // espresso
-  secondaryText: '#7A5C4D', // mocha
-  mainText: '#3D1C0C', // dark brown
-  cardBg: '#FFFFFF',   // white
-  rosewood: '#C09891',
+  bg:            '#FAF3EB',
+  imgBg:         '#F0E4D6',
+  border:        '#EAD9C9',
+  primary:       '#5C3221',
+  secondaryText: '#7A5C4D',
+  mainText:      '#3D1C0C',
+  cardBg:        '#FFFFFF',
+  rosewood:      '#C09891',
 };
 
 const FONT = {
   playfair: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-  poppins: Platform.OS === 'ios' ? 'System' : 'sans-serif'
+  poppins:  Platform.OS === 'ios' ? 'System'  : 'sans-serif',
 };
 
-const SIZES = [
-  { id: 'S', label: 'S', mult: 1 },
-  { id: 'M', label: 'M', mult: 1.25 },
-  { id: 'L', label: 'L', mult: 1.5 }
-];
+// ─── Reusable sub-components ──────────────────────────────────────────────────
 
-const TOPPINGS_LIST = [
-  { id: 'vanille', name: 'Sirop de Vanille', price: 1.5 },
-  { id: 'caramel', name: 'Caramel beurre salé', price: 1.5 },
-  { id: 'shot', name: 'Shot d\'espresso', price: 2.0 },
-  { id: 'chantilly', name: 'Crème Chantilly', price: 1.0 },
-];
+const SectionTitle = ({ label }) => (
+  <Text style={styles.sectionTitle}>{label}</Text>
+);
+
+const RadioRow = ({ options, selected, onSelect, labelKey = 'name', extraKey = null }) => (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}
+    contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
+    {options.map((opt) => {
+      const label = typeof opt === 'string' ? opt : opt[labelKey];
+      const isSelected = typeof opt === 'string' ? selected === opt : selected?.id === opt.id;
+      const extra = extraKey && opt[extraKey] > 0 ? ` +${opt[extraKey].toFixed(2)}` : '';
+      return (
+        <TouchableOpacity
+          key={typeof opt === 'string' ? opt : opt.id}
+          style={[styles.radioPill, isSelected && styles.radioPillActive]}
+          onPress={() => { Haptics.selectionAsync(); onSelect(opt); }}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.radioPillTxt, isSelected && styles.radioPillTxtActive]}>
+            {label}{extra}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </ScrollView>
+);
+
+const SizePills = ({ sizes, selected, onSelect }) => (
+  <View style={styles.sizeRow}>
+    {sizes.map(s => {
+      const isSelected = selected?.id === s.id;
+      return (
+        <TouchableOpacity
+          key={s.id}
+          style={[styles.sizePill, isSelected && styles.sizePillActive]}
+          onPress={() => { Haptics.selectionAsync(); onSelect(s); }}
+        >
+          <Text style={[styles.sizeTxt, isSelected && styles.sizeTxtActive]}>{s.label}</Text>
+          <Text style={[styles.sizeVolume, isSelected && styles.sizeTxtActive]}>{s.volume}</Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+);
+
+const CheckboxList = ({ items, selected, onToggle, priceKey = 'price' }) => (
+  <View style={styles.checkList}>
+    {items.map(item => {
+      const isChecked = !!selected[item.id];
+      return (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.checkboxRow}
+          onPress={() => { Haptics.selectionAsync(); onToggle(item); }}
+          activeOpacity={0.75}
+        >
+          <View style={[styles.checkboxSquare, isChecked && styles.checkboxSquareActive]}>
+            {isChecked && <Check size={11} color={C.bg} strokeWidth={3} />}
+          </View>
+          <Text style={styles.checkboxLabel}>{item.name}</Text>
+          {item[priceKey] > 0 && (
+            <Text style={styles.checkboxPrice}>+{item[priceKey].toFixed(2)} DT</Text>
+          )}
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+);
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProductDetailScreen() {
   const { id, coffeeString } = useLocalSearchParams();
   const router = useRouter();
   const { addItem } = useCartStore();
 
-  const [product, setProduct] = useState(null);
-  const [isLoading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [sizeObj, setSizeObj] = useState(SIZES[1]); // Default 'M'
-  const [selectedToppings, setSelectedToppings] = useState({});
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [product,      setProduct]      = useState(null);
+  const [isLoading,    setLoading]      = useState(true);
+  const [error,        setError]        = useState(null);
+  const [isFavorite,   setIsFavorite]   = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
-
-  // Toast animation
   const [toastMessage, setToastMessage] = useState(null);
-  const toastTranslateY = useRef(new Animated.Value(100)).current;
+  const [custom,       setCustom]       = useState(null); // customization state
+  const [config,       setConfig]       = useState(null);
+
+  const toastY = useRef(new Animated.Value(100)).current;
 
   useEffect(() => {
-    const loadProduct = async () => {
+    const load = async () => {
       setLoading(true);
       try {
+        let p;
         if (coffeeString) {
-          setProduct(JSON.parse(coffeeString));
-          setLoading(false);
-          return;
+          p = JSON.parse(coffeeString);
+        } else {
+          const res = await menuApi.getProductById(id);
+          if (res.success) p = res.data;
+          else { setError('Produit introuvable.'); return; }
         }
-        const res = await menuApi.getProductById(id);
-        if (res.success) setProduct(res.data);
-        else setError('Produit introuvable.');
-      } catch (err) {
+        setProduct(p);
+        const cfg = getConfig(p.category_type ?? p.category?.type ?? 'coffee');
+        setConfig(cfg);
+        setCustom(buildInitialState(cfg));
+      } catch {
         setError('Erreur réseau.');
       } finally {
         setLoading(false);
       }
     };
-    loadProduct();
+    load();
   }, [id, coffeeString]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     Animated.sequence([
-      Animated.spring(toastTranslateY, { toValue: 0, useNativeDriver: true, friction: 6 }),
-      Animated.delay(1500),
-      Animated.timing(toastTranslateY, { toValue: 100, duration: 300, useNativeDriver: true })
+      Animated.spring(toastY, { toValue: 0, useNativeDriver: true, friction: 6 }),
+      Animated.delay(1400),
+      Animated.timing(toastY, { toValue: 100, duration: 280, useNativeDriver: true }),
     ]).start(() => setToastMessage(null));
   };
 
-  const toggleTopping = (topping) => {
-    Haptics.selectionAsync();
-    setSelectedToppings(prev => {
-      const isChecked = !!prev[topping.id];
-      const newToppings = { ...prev };
-      if (isChecked) delete newToppings[topping.id];
-      else newToppings[topping.id] = topping;
-      return newToppings;
-    });
-  };
+  const set = (key, val) => setCustom(prev => ({ ...prev, [key]: val }));
+
+  const toggleMap = (key, item) => setCustom(prev => {
+    const map = { ...prev[key] };
+    if (map[item.id]) delete map[item.id];
+    else map[item.id] = item;
+    return { ...prev, [key]: map };
+  });
 
   const handleAddToCart = () => {
+    if (!product || !custom || !config) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    // Formatting the options string
-    const toppingsArr = Object.values(selectedToppings).map(t => t.name);
-    const finalOptions = [sizeObj.label, ...toppingsArr];
-
-    addItem({ 
-      ...product, 
-      price: computedPrice, 
-      options: finalOptions
-    }, 1);
-
-    showToast('Ajouté au panier');
+    const extras     = computeExtras(custom);
+    const sizeMult   = custom.size?.mult ?? 1;
+    const finalPrice = Number(product.price) * sizeMult + extras;
+    const options    = buildOptionsArray(custom, config);
+    addItem({ ...product, price: finalPrice }, 1, options);
+    showToast('Ajouté au panier ✓');
   };
+
+  // ── Loading / Error states ──────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -123,12 +183,11 @@ export default function ProductDetailScreen() {
       </View>
     );
   }
-
-  if (error || !product) {
+  if (error || !product || !custom || !config) {
     return (
       <View style={[styles.container, styles.center]}>
         <AlertCircle size={48} color={C.rosewood} style={{ marginBottom: 16 }} />
-        <Text style={{ fontSize: 16, fontFamily: FONT.poppins, color: C.mainText, marginBottom: 16 }}>{error || 'Coffee not found'}</Text>
+        <Text style={styles.errorText}>{error || 'Produit introuvable'}</Text>
         <TouchableOpacity style={styles.backBtnFallback} onPress={() => router.back()}>
           <Text style={{ color: C.bg, fontFamily: FONT.poppins, fontWeight: 'bold' }}>Retour</Text>
         </TouchableOpacity>
@@ -136,190 +195,339 @@ export default function ProductDetailScreen() {
     );
   }
 
-  // Dynamic Computation
-  const basePrice = Number(product.price);
-  const toppingsPrice = Object.values(selectedToppings).reduce((sum, t) => sum + t.price, 0);
-  const computedPrice = (basePrice * sizeObj.mult) + toppingsPrice;
-
-  // Mock pseudo tags for realism
-  const isCold = product.category_id === 4;
-  const volumeStr = sizeObj.id === 'S' ? '250ml' : sizeObj.id === 'M' ? '350ml' : '450ml';
+  // ── Render ──────────────────────────────────────────────────────────────────
+  // (custom and config are guaranteed non-null past this point)
+  const extras     = computeExtras(custom);
+  const sizeMult   = custom.size?.mult ?? 1;
+  const finalPrice = Number(product.price) * sizeMult + extras;
+  const volume     = custom.size?.volume ?? '';
 
   return (
     <View style={styles.container}>
-      {/* Top Half: Image */}
+
+      {/* ── Product image ── */}
       <View style={styles.imgWrapper}>
-        {product.image_url ? (
-          <Image source={{ uri: product.image_url }} style={styles.headerImage} />
-        ) : (
-          <View style={styles.emojiFallback}>
-            <ProductImageFallback size={72} color={C.rosewood} />
-          </View>
-        )}
+        {product.image_url
+          ? <Image source={{ uri: product.image_url }} style={styles.headerImage} />
+          : <View style={styles.emojiFallback}><ProductImageFallback size={72} color={C.rosewood} /></View>
+        }
       </View>
-      
-      {/* Absolute Header Icons */}
+
+      {/* ── Top bar ── */}
       <View style={styles.appBar}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
           <ChevronLeft size={24} color={C.mainText} />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.iconBtn} 
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsFavorite(!isFavorite);
-          }}
-        >
-          <Heart size={20} color={isFavorite ? C.rosewood : C.mainText} fill={isFavorite ? C.rosewood : 'transparent'} />
+        <TouchableOpacity style={styles.iconBtn} onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setIsFavorite(v => !v);
+        }}>
+          <Heart size={20} color={isFavorite ? C.rosewood : C.mainText}
+            fill={isFavorite ? C.rosewood : 'transparent'} />
         </TouchableOpacity>
       </View>
 
-      {/* Bottom Half: Sliding Card */}
-      <ScrollView 
-        contentContainerStyle={styles.bottomSheet}
+      {/* ── Scrollable content ── */}
+      <ScrollView
         style={styles.sheetScroll}
+        contentContainerStyle={styles.bottomSheet}
         showsVerticalScrollIndicator={false}
       >
-        {/* Title */}
+        {/* Title + tags */}
         <Text style={styles.title}>{product.name}</Text>
-
-        {/* Tags Row */}
         <View style={styles.tagsRow}>
-          <View style={styles.tagPill}>
-            {isCold ? (
-              <Snowflake size={12} color="#FFF8F0" strokeWidth={2} style={{ marginRight: 6 }} />
-            ) : (
-              <Coffee size={12} color="#FFF8F0" strokeWidth={2} style={{ marginRight: 6 }} />
-            )}
-            <Text style={styles.tagText}>{isCold ? 'Froid' : 'Chaud'}</Text>
-          </View>
-          <View style={styles.tagPill}><Text style={styles.tagText}>{volumeStr}</Text></View>
-          <View style={styles.tagPill}><Text style={styles.tagText}>Caféine moyenne</Text></View>
+          {volume ? <View style={styles.tagPill}><Text style={styles.tagText}>{volume}</Text></View> : null}
+          {product.temperature && (
+            <View style={styles.tagPill}>
+              <Text style={styles.tagText}>{product.temperature === 'iced' ? 'Froid ❄️' : 'Chaud ☕'}</Text>
+            </View>
+          )}
+          {product.dietary_tags?.map(t => (
+            <View key={t} style={[styles.tagPill, { backgroundColor: '#6B8E23' }]}>
+              <Text style={styles.tagText}>{t}</Text>
+            </View>
+          ))}
         </View>
 
         {/* Description */}
-        <TouchableOpacity onPress={() => setDescExpanded(!descExpanded)} activeOpacity={0.8}>
+        <TouchableOpacity onPress={() => setDescExpanded(v => !v)} activeOpacity={0.8}>
           <Text style={styles.description} numberOfLines={descExpanded ? undefined : 2}>
-            {product.description || "Une création signature exquise finement préparée. Ce délicieux breuvage allie la perfection de nos grains artisanaux à une touche veloutée, assurant une expérience inoubliable pour tout amateur de café."}
+            {product.description || "Une création signature exquise finement préparée par nos baristas."}
           </Text>
           {!descExpanded && <Text style={styles.voirPlus}>voir plus</Text>}
         </TouchableOpacity>
 
-        {/* Personnalisation */}
-        <Text style={styles.sectionTitle}>Personnaliser</Text>
-        <View style={styles.sizeRow}>
-          {SIZES.map(s => {
-            const isSelected = sizeObj.id === s.id;
-            return (
-              <TouchableOpacity
-                key={s.id}
-                style={[styles.sizePill, isSelected && styles.sizePillActive]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setSizeObj(s);
-                }}
-              >
-                <Text style={[styles.sizeTxt, isSelected && styles.sizeTxtActive]}>{s.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {/* ── PERSONNALISATION DYNAMIQUE ── */}
+        <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Personnaliser</Text>
 
-        {/* Toppings (Checkboxes) */}
-        <Text style={styles.sectionTitle}>Suppléments</Text>
-        <View style={styles.toppingsWrapper}>
-          {TOPPINGS_LIST.map(topping => {
-            const isChecked = !!selectedToppings[topping.id];
-            return (
-              <TouchableOpacity 
-                key={topping.id} 
-                style={styles.checkboxRow} 
-                onPress={() => toggleTopping(topping)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.checkboxSquare, isChecked && styles.checkboxSquareActive]}>
-                  {isChecked && <Check size={12} color={C.bg} strokeWidth={3} />}
-                </View>
-                <Text style={styles.checkboxLabel}>{topping.name}</Text>
-                <Text style={styles.checkboxPrice}>+{topping.price.toFixed(2)} DT</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {/* 1. Taille */}
+        {config.sizes && (
+          <>
+            <SectionTitle label="Taille" />
+            <SizePills sizes={config.sizes} selected={custom.size} onSelect={s => set('size', s)} />
+          </>
+        )}
+
+        {/* 2. Type de lait — coffee */}
+        {config.milkTypes && (
+          <>
+            <SectionTitle label="Type de lait" />
+            <RadioRow
+              options={config.milkTypes}
+              selected={custom.milkType}
+              onSelect={v => set('milkType', v)}
+              extraKey="extra"
+            />
+          </>
+        )}
+
+        {/* 3. Base liquide — cold */}
+        {config.bases && (
+          <>
+            <SectionTitle label="Base" />
+            <RadioRow
+              options={config.bases}
+              selected={custom.base}
+              onSelect={v => set('base', v)}
+              extraKey="extra"
+            />
+          </>
+        )}
+
+        {/* 4. Type de pain — food */}
+        {config.breadTypes && (
+          <>
+            <SectionTitle label="Type de pain" />
+            <RadioRow
+              options={config.breadTypes}
+              selected={custom.breadType}
+              onSelect={v => set('breadType', v)}
+              extraKey="extra"
+            />
+          </>
+        )}
+
+        {/* 5. Température — coffee / drink / special */}
+        {config.temperatures && (
+          <>
+            <SectionTitle label="Température" />
+            <RadioRow
+              options={config.temperatures}
+              selected={custom.temperature}
+              onSelect={v => set('temperature', v)}
+            />
+          </>
+        )}
+
+        {/* 6. Sucre — coffee / drink */}
+        {config.sugarLevels && (
+          <>
+            <SectionTitle label="Sucre" />
+            <RadioRow
+              options={config.sugarLevels}
+              selected={custom.sugar}
+              onSelect={v => set('sugar', v)}
+            />
+          </>
+        )}
+
+        {/* 7. Force d'infusion — drink */}
+        {config.steepingTimes && (
+          <>
+            <SectionTitle label="Force de l'infusion" />
+            <RadioRow
+              options={config.steepingTimes}
+              selected={custom.steeping}
+              onSelect={v => set('steeping', v)}
+            />
+          </>
+        )}
+
+        {/* 8. Niveau de glace — cold */}
+        {config.iceLevels && (
+          <>
+            <SectionTitle label="Niveau de glace" />
+            <RadioRow
+              options={config.iceLevels}
+              selected={custom.iceLevel}
+              onSelect={v => set('iceLevel', v)}
+            />
+          </>
+        )}
+
+        {/* 9. Douceur — cold */}
+        {config.sweetnessLevels && (
+          <>
+            <SectionTitle label="Douceur" />
+            <RadioRow
+              options={config.sweetnessLevels}
+              selected={custom.sweetness}
+              onSelect={v => set('sweetness', v)}
+            />
+          </>
+        )}
+
+        {/* 10. Grillé — food */}
+        {config.toastedOptions && (
+          <>
+            <SectionTitle label="Cuisson" />
+            <RadioRow
+              options={config.toastedOptions}
+              selected={custom.toasted}
+              onSelect={v => set('toasted', v)}
+            />
+          </>
+        )}
+
+        {/* 11. Mode de service — dessert */}
+        {config.servingStyles && (
+          <>
+            <SectionTitle label="Service" />
+            <RadioRow
+              options={config.servingStyles}
+              selected={custom.serving}
+              onSelect={v => set('serving', v)}
+            />
+          </>
+        )}
+
+        {/* 12. Réchauffage — dessert */}
+        {config.warmingOptions && (
+          <>
+            <SectionTitle label="Température" />
+            <RadioRow
+              options={config.warmingOptions}
+              selected={custom.warming}
+              onSelect={v => set('warming', v)}
+            />
+          </>
+        )}
+
+        {/* 13. Suppléments (checkboxes) */}
+        {config.supplements?.length > 0 && (
+          <>
+            <SectionTitle label="Suppléments" />
+            <CheckboxList
+              items={config.supplements}
+              selected={custom.supplements}
+              onToggle={item => toggleMap('supplements', item)}
+            />
+          </>
+        )}
+
+        {/* 14. Sauces (checkboxes) — food */}
+        {config.sauces?.length > 0 && (
+          <>
+            <SectionTitle label="Sauces" />
+            <CheckboxList
+              items={config.sauces}
+              selected={custom.sauces}
+              onToggle={item => toggleMap('sauces', item)}
+            />
+          </>
+        )}
 
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Floating Checkout Footer */}
+      {/* ── Floating footer ── */}
       <View style={styles.footer}>
-        <Text style={styles.footerPrice}>{computedPrice.toFixed(2)} DT</Text>
+        <View>
+          <Text style={styles.footerPrice}>{finalPrice.toFixed(3)} DT</Text>
+          {extras > 0 && (
+            <Text style={styles.footerExtras}>+{extras.toFixed(3)} suppléments</Text>
+          )}
+        </View>
         <TouchableOpacity style={styles.addToCartBtn} onPress={handleAddToCart}>
           <Text style={styles.addText}>Ajouter au panier</Text>
         </TouchableOpacity>
       </View>
 
-      {/* TOAST SYSTEM */}
-      <Animated.View style={[styles.toastContainer, { transform: [{ translateY: toastTranslateY }] }]}>
-        <Text style={styles.toastText}>{toastMessage}</Text>
-      </Animated.View>
+      {/* ── Toast ── */}
+      {toastMessage && (
+        <Animated.View style={[styles.toastContainer, { transform: [{ translateY: toastY }] }]}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.imgBg },
-  center: { justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
-  
-  imgWrapper: { position: 'absolute', top: 0, width: '100%', height: height * 0.55 },
+  center:    { justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
+
+  imgWrapper:  { position: 'absolute', top: 0, width: '100%', height: height * 0.45 },
   headerImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   emojiFallback: { width: '100%', height: '100%', backgroundColor: C.imgBg, justifyContent: 'center', alignItems: 'center' },
-  
-  appBar: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: Platform.OS === 'ios' ? 60 : 40, position: 'absolute', width: '100%', zIndex: 10 },
-  iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.85)', alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 },
-  
-  sheetScroll: { marginTop: height * 0.45, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: C.bg, overflow: 'hidden' },
-  bottomSheet: { paddingHorizontal: 24, paddingBottom: 40, paddingTop: 28 },
-  
-  title: { fontSize: 22, fontFamily: FONT.playfair, color: C.mainText, marginBottom: 12 },
-  
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
-  tagPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.primary,
-    borderWidth: 1,
-    borderColor: C.secondaryText,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+
+  appBar: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingHorizontal: 24, paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    position: 'absolute', width: '100%', zIndex: 10,
   },
-  tagText: { fontFamily: FONT.poppins, fontSize: 10, color: '#FFF8F0' },
-  
+  iconBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.88)',
+    alignItems: 'center', justifyContent: 'center',
+    elevation: 4, shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6,
+  },
+
+  sheetScroll:  { marginTop: height * 0.38, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: C.bg, overflow: 'hidden' },
+  bottomSheet:  { paddingHorizontal: 24, paddingBottom: 40, paddingTop: 28 },
+
+  title:       { fontSize: 22, fontFamily: FONT.playfair, color: C.mainText, marginBottom: 10 },
   description: { fontFamily: FONT.poppins, fontSize: 12, color: C.secondaryText, lineHeight: 18 },
-  voirPlus: { fontFamily: FONT.poppins, fontSize: 12, color: C.primary, fontWeight: '700', marginTop: 4, marginBottom: 24 },
-  
-  sectionTitle: { fontSize: 16, fontFamily: FONT.playfair, color: C.mainText, marginBottom: 12, marginTop: 12 },
-  
-  sizeRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  sizePill: { flex: 1, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: C.rosewood, backgroundColor: 'transparent', alignItems: 'center' },
+  voirPlus:    { fontFamily: FONT.poppins, fontSize: 12, color: C.primary, fontWeight: '700', marginTop: 4, marginBottom: 20 },
+  errorText:   { fontSize: 16, fontFamily: FONT.poppins, color: C.mainText, marginBottom: 16 },
+
+  tagsRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  tagPill:  { backgroundColor: C.primary, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  tagText:  { fontFamily: FONT.poppins, fontSize: 10, color: '#FFF8F0' },
+
+  sectionTitle: { fontSize: 13, fontFamily: FONT.poppins, fontWeight: '600', color: C.secondaryText, marginBottom: 10, marginTop: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  // Size pills
+  sizeRow:     { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  sizePill:    { flex: 1, paddingVertical: 12, borderRadius: 20, borderWidth: 1.5, borderColor: C.rosewood, alignItems: 'center' },
   sizePillActive: { backgroundColor: C.secondaryText, borderColor: C.secondaryText },
-  sizeTxt: { fontFamily: FONT.poppins, fontSize: 13, color: C.rosewood },
-  sizeTxtActive: { color: C.bg, fontWeight: 'bold' },
-  
-  toppingsWrapper: { gap: 12, marginBottom: 16 },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center' },
-  checkboxSquare: { width: 16, height: 16, borderRadius: 4, borderWidth: 1.5, borderColor: C.rosewood, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  sizeTxt:     { fontFamily: FONT.poppins, fontSize: 14, color: C.rosewood, fontWeight: '600' },
+  sizeVolume:  { fontFamily: FONT.poppins, fontSize: 10, color: C.rosewood, marginTop: 2 },
+  sizeTxtActive: { color: C.bg },
+
+  // Radio pills
+  radioPill:       { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.cardBg },
+  radioPillActive: { backgroundColor: C.secondaryText, borderColor: C.secondaryText },
+  radioPillTxt:    { fontFamily: FONT.poppins, fontSize: 12, color: C.secondaryText },
+  radioPillTxtActive: { color: C.bg, fontWeight: '600' },
+
+  // Checkboxes
+  checkList:    { gap: 12, marginBottom: 20 },
+  checkboxRow:  { flexDirection: 'row', alignItems: 'center' },
+  checkboxSquare: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, borderColor: C.rosewood, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   checkboxSquareActive: { backgroundColor: C.secondaryText, borderColor: C.secondaryText },
-  checkboxLabel: { flex: 1, fontFamily: FONT.poppins, fontSize: 13, color: C.mainText },
-  checkboxPrice: { fontFamily: FONT.poppins, fontSize: 12, color: C.secondaryText, fontWeight: '600' },
-  
-  footer: { position: 'absolute', bottom: 0, width: '100%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.border },
-  footerPrice: { fontFamily: FONT.playfair, fontSize: 20, color: C.mainText, width: 100 },
-  addToCartBtn: { flex: 1, backgroundColor: C.primary, paddingVertical: 14, borderRadius: 24, alignItems: 'center' },
-  addText: { color: C.bg, fontSize: 13, fontFamily: FONT.poppins, fontWeight: 'bold' },
-  
+  checkboxLabel:  { flex: 1, fontFamily: FONT.poppins, fontSize: 13, color: C.mainText },
+  checkboxPrice:  { fontFamily: FONT.poppins, fontSize: 12, color: C.secondaryText, fontWeight: '600' },
+
+  // Footer
+  footer: {
+    position: 'absolute', bottom: 0, width: '100%',
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 24, paddingTop: 14,
+    paddingBottom: Platform.OS === 'ios' ? 38 : 18,
+    backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.border,
+    gap: 16,
+  },
+  footerPrice:  { fontFamily: FONT.playfair, fontSize: 20, color: C.mainText },
+  footerExtras: { fontFamily: FONT.poppins, fontSize: 10, color: C.rosewood, marginTop: 1 },
+  addToCartBtn: { flex: 1, backgroundColor: C.primary, paddingVertical: 15, borderRadius: 24, alignItems: 'center' },
+  addText:      { color: C.bg, fontSize: 13, fontFamily: FONT.poppins, fontWeight: 'bold' },
+
   backBtnFallback: { backgroundColor: C.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 16 },
 
-  toastContainer: { position: 'absolute', bottom: 100, alignSelf: 'center', backgroundColor: C.mainText, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 24, zIndex: 60, elevation: 5 },
-  toastText: { color: C.bg, fontFamily: FONT.poppins, fontSize: 12, fontWeight: 'bold' }
+  toastContainer: { position: 'absolute', bottom: 108, alignSelf: 'center', backgroundColor: C.mainText, paddingHorizontal: 22, paddingVertical: 10, borderRadius: 24, zIndex: 60, elevation: 6 },
+  toastText:      { color: C.bg, fontFamily: FONT.poppins, fontSize: 12, fontWeight: 'bold' },
 });

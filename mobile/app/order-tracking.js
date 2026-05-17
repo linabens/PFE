@@ -74,6 +74,9 @@ export default function OrderTrackingModal() {
           if (e.message.includes('403') || e.message.includes('401') || e.message.includes('session') || e.message.includes('refusé')) {
             if (pollRef.current) clearInterval(pollRef.current);
             clearCurrentOrder();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            alert("Votre session a été fermée ou a expiré. Veuillez rescanner le QR code.");
+            router.replace('/scan');
           }
         }
       };

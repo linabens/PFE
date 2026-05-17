@@ -2,14 +2,11 @@
 
 import * as React from "react"
 import {
-  Coffee,
   Eye,
   EyeOff,
   HelpCircle,
   Lock,
   Mail,
-  Shield,
-  UserPlus,
   Check,
   Loader2,
 } from "lucide-react"
@@ -20,17 +17,13 @@ import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/stores/appStore"
 
-type Role = "admin" | "staff"
 type Status = "idle" | "loading" | "success" | "error"
 
 export function LoginPage({
-  onCreateAccount,
   onForgotPassword,
 }: {
-  onCreateAccount: () => void
   onForgotPassword: () => void
 }) {
-  const [role, setRole] = React.useState<Role>("admin")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
@@ -42,6 +35,8 @@ export function LoginPage({
   }>({})
   const [shake, setShake] = React.useState(false)
 
+  const navigate = useNavigate()
+
   function validate() {
     const next: typeof errors = {}
     if (!email) next.email = "Email is required"
@@ -52,52 +47,43 @@ export function LoginPage({
     return Object.keys(next).length === 0
   }
 
-  const navigate = useNavigate();
-
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
     if (!validate()) {
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-      return;
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+      return
     }
-    setStatus("loading");
+    setStatus("loading")
 
     try {
       const response = await api.post<{ user: any; token: string }>('/auth/login', {
         email,
-        password
-      });
+        password,
+      })
 
-      // Strict RBAC Check: Ensure the user's role matches the selected portal
-      if (response.user.role !== role) {
-        const portalName = role === 'admin' ? 'Administrateur' : 'Staff';
-        throw new Error(`Accès refusé : Ce compte n'a pas les droits pour le portail ${portalName}.`);
+      if (response.user.role !== 'admin' && response.user.role !== 'staff') {
+        throw new Error("Accès refusé : ce compte n'a pas accès au tableau de bord.")
       }
 
-      // Store token and user data
-      localStorage.setItem('coffee_admin_token', response.token);
-      localStorage.setItem('coffee_admin_user', JSON.stringify(response.user));
-      
-      const { setUser } = useAppStore.getState();
-      setUser(response.user);
+      localStorage.setItem('coffee_admin_token', response.token)
+      localStorage.setItem('coffee_admin_user', JSON.stringify(response.user))
 
-      setStatus("success");
+      const { setUser } = useAppStore.getState()
+      setUser(response.user)
 
-      // Short delay for the "success" animation
+      setStatus("success")
       setTimeout(() => {
-        navigate('/');
-      }, 800);
+        window.location.href = '/'
+      }, 800)
     } catch (error: any) {
-      console.error('Login failed:', error);
-      setStatus("idle");
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-
-      // Show error in a toast or set error state
+      console.error('Login failed:', error)
+      setStatus("idle")
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
       import('react-hot-toast').then(({ toast }) => {
-        toast.error(error.message || 'Authentication failed');
-      });
+        toast.error(error.message || 'Authentication failed')
+      })
     }
   }
 
@@ -111,31 +97,10 @@ export function LoginPage({
     >
       <BrandHeader title="Admin Portal" subtitle="Welcome back" />
 
-      {/* Role toggle */}
-      <div
-        className="mt-6 flex animate-fade-up rounded-full border border-white/15 bg-white/5 p-1"
-        style={{ animationDelay: "240ms" }}
-        role="tablist"
-        aria-label="Select role"
-      >
-        <RoleTab
-          active={role === "admin"}
-          onClick={() => setRole("admin")}
-          icon={<Shield className="h-4 w-4" />}
-          label="Administrator"
-        />
-        <RoleTab
-          active={role === "staff"}
-          onClick={() => setRole("staff")}
-          icon={<Coffee className="h-4 w-4" />}
-          label="Staff"
-        />
-      </div>
-
       <form onSubmit={handleSubmit} className="mt-6 stagger" noValidate>
         <div className="animate-fade-up">
           <AnimatedInput
-            label={role === "admin" ? "Admin email" : "Staff email or username"}
+            label="Email address"
             type="email"
             autoComplete="off"
             icon={<Mail className="h-4 w-4" />}
@@ -178,10 +143,8 @@ export function LoginPage({
           />
         </div>
 
-        <div
-          className="mt-4 flex items-center justify-between animate-fade-up text-xs"
-        >
-          <label className="group flex cursor-pointer items-center gap-2 text-cream/80">
+        <div className="mt-4 flex items-center justify-between animate-fade-up text-xs">
+          <label className="group flex cursor-pointer items-center gap-2 text-white/90 font-medium">
             <span
               className={cn(
                 "flex h-4 w-4 items-center justify-center rounded-md border border-white/30 transition-all",
@@ -191,7 +154,7 @@ export function LoginPage({
               )}
             >
               {remember && (
-                <Check className="h-3 w-3 text-cream animate-scale-in" strokeWidth={3} />
+                <Check className="h-3 w-3 text-white animate-scale-in" strokeWidth={3} />
               )}
             </span>
             <input
@@ -206,7 +169,7 @@ export function LoginPage({
           <button
             type="button"
             onClick={onForgotPassword}
-            className="group relative text-cream/75 transition hover:text-cream"
+            className="group relative text-white/90 font-medium transition hover:text-white"
           >
             Forgot password?
             <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-rosewood transition-all group-hover:w-full" />
@@ -232,66 +195,18 @@ export function LoginPage({
             <>Sign In</>
           )}
         </button>
-
-        <button
-          type="button"
-          onClick={onCreateAccount}
-          className="mt-3 flex w-full animate-fade-up items-center justify-center gap-2 rounded-2xl border-2 border-white/25 bg-white/5 px-5 py-3 text-sm font-medium text-cream transition hover:border-white/40 hover:bg-white/10"
-        >
-          <UserPlus className="h-4 w-4" />
-          New here? Create an account
-        </button>
       </form>
 
-      <div
-        className="mt-6 flex animate-fade-up items-center justify-center gap-5 text-[11px] text-cream/55"
-      >
-        <button className="flex items-center gap-1 transition hover:text-cream/80">
+      <div className="mt-6 flex animate-fade-up items-center justify-center gap-5 text-[11px] text-white/60">
+        <button className="flex items-center gap-1 transition hover:text-white/90">
           <HelpCircle className="h-3 w-3" />
           Need help?
         </button>
         <span aria-hidden="true">•</span>
-        <button className="transition hover:text-cream/80">Terms</button>
+        <button className="transition hover:text-white/90">Terms</button>
         <span aria-hidden="true">•</span>
-        <button className="transition hover:text-cream/80">Privacy</button>
+        <button className="transition hover:text-white/90">Privacy</button>
       </div>
     </section>
-  )
-}
-
-function RoleTab({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean
-  onClick: () => void
-  icon: React.ReactNode
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn(
-        "relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-medium transition-colors",
-        active ? "text-cream" : "text-cream/60 hover:text-cream/85",
-      )}
-    >
-      {active && (
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 rounded-full bg-gradient-to-r from-mocha to-rosewood shadow-md"
-          style={{ transition: "all 0.4s cubic-bezier(0.4,0,0.2,1)" }}
-        />
-      )}
-      <span className="relative flex items-center gap-2">
-        {icon}
-        {label}
-      </span>
-    </button>
   )
 }

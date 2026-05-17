@@ -18,8 +18,9 @@ export const assistanceApi = {
       const response = await client.post(API_ENDPOINTS.ASSISTANCE.CALL || '/api/assistance', { table_id: tableId });
       return response;
     } catch (error) {
-      // Ignorer l'erreur 409 dans la console pour éviter de polluer le terminal
-      if (!error.message?.includes('déjà en attente')) {
+      // Ignorer l'erreur 409 et les erreurs de session dans la console
+      const isSessionError = error.message?.includes('Session') || error.message?.includes('token') || error.message?.includes('401');
+      if (!error.message?.includes('déjà en attente') && !isSessionError) {
         console.error('Assistance API Request Error:', error.message);
       }
       return {

@@ -1,0 +1,130 @@
+\chapter{Release 2 — Administration Avancée et Services Innovants}
+
+\section{Introduction}
+La deuxième release du projet Coffee Time se concentre sur l'optimisation de la gestion opérationnelle et l'enrichissement de l'expérience client par des technologies innovantes. Ce chapitre présente le travail réalisé lors des deux derniers sprints : le pilotage administratif de la plateforme et l'intégration de services interactifs basés sur l'IA et le divertissement.
+
+%=========================================================
+\section{Sprint 3 : Dashboard Administratif et Gestion Opérationnelle}
+%=========================================================
+
+\subsection{Objectif du Sprint 3}
+Ce sprint est dédié au "Back-Office" de la plateforme. L'objectif est de fournir aux administrateurs et au personnel un outil centralisé pour piloter l'activité du café, gérer le catalogue et superviser les commandes en temps réel.
+
+\subsection{Backlog du Sprint 3}
+La table ci-dessous présente le backlog du Sprint 3 et décrit les tâches à réaliser et éventuellement la décomposition des tâches en sous-tâches. Ce troisième sprint est consacré à l'administration et la gestion.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du Sprint 3 — Administration et Gestion}
+\renewcommand{\arraystretch}{1.5}
+\small
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{8cm}|}
+\hline
+\textbf{Sprint} & \textbf{Tâches} & \textbf{Sous tâches} \\
+\hline
+\multirow{4}{*}{\textbf{Sprint 3}} & Tableau de bord et Analyses & - Consulter les statistiques et revenus \newline - Visualiser l'activité globale \\
+\cline{2-3}
+ & Gestion du Catalogue & - Gérer les catégories et les produits \newline - Gérer les offres et promotions \\
+\cline{2-3}
+ & Gestion Opérationnelle & - Suivre les commandes en direct \newline - Gérer les tables et les QR codes \newline - Répondre aux appels d'assistance \\
+\cline{2-3}
+ & Administration & - Gérer les comptes du personnel \newline - Gérer le programme de fidélité \newline - Gérer le profil administrateur \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Conception du Sprint 3}
+
+\subsubsection{Diagramme de cas d'utilisation}
+Le diagramme suivant illustre les interactions des deux acteurs avec le système d'administration. On note que l'administrateur hérite de toutes les fonctionnalités du staff.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/sprint3_use_case.png}
+    \caption{Diagramme de cas d'utilisation — Sprint 3 (Dashboard)}
+    \label{fig:sprint3_use_case}
+\end{figure}
+
+\subsubsection{Diagrammes de séquence clés}
+Deux flux critiques ont été modélisés : la gestion du catalogue par l'admin et la mise à jour opérationnelle des commandes par le staff.
+
+\paragraph{Mise à jour d'un produit}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/sprint3_seq_produit.png}
+    \caption{Diagramme de séquence — Mise à jour d'un produit}
+    \label{fig:sprint3_seq_produit}
+\end{figure}
+
+\paragraph{Gestion d'une commande en direct}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/sprint3_seq_commande.png}
+    \caption{Diagramme de séquence — Gestion d'une commande en direct}
+    \label{fig:sprint3_seq_commande}
+\end{figure}
+
+%=========================================================
+\subsection{Réalisation du Sprint 3}
+%=========================================================
+
+\subsubsection{Interface Analytics}
+Le tableau de bord principal affiche les indicateurs de performance (KPI) pour une prise de décision rapide.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/sprint3_analytics.png}
+    \caption{Interface Analytics}
+    \label{fig:sprint3_analytics}
+\end{figure}
+
+\subsubsection{Interface Live Orders}
+Cette interface permet au personnel de suivre le flux des commandes et de notifier les clients de l'avancement.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/sprint3_live_orders.png}
+    \caption{Interface Live Orders}
+    \label{fig:sprint3_live_orders}
+\end{figure}
+
+%=========================================================
+\section{Sprint 4 : Services Additionnels, IA et Divertissement}
+%=========================================================
+
+\subsection{Objectif du Sprint 4}
+Ce sprint final vise à transformer l'attente du client en un moment de divertissement et à offrir une assistance intelligente via l'intelligence artificielle.
+
+\subsection{Backlog du Sprint 4}
+\begin{table}[H]
+\centering
+\caption{Backlog du Sprint 4 — Services Additionnels}
+\renewcommand{\arraystretch}{1.3}
+\small
+\begin{tabular}{|p{1cm}|p{3.5cm}|p{6cm}|p{1.5cm}|}
+\hline
+\textbf{Id} & \textbf{Fonctionnalité} & \textbf{User Story} & \textbf{Priorité} \\
+\hline
+US18 & Chatbot IA Luna & En tant que client, je veux discuter avec Luna pour obtenir des conseils. & Moyenne \\
+\hline
+US19 & Espace Gaming & En tant que client, je veux jouer à des mini-jeux (Memory, Quiz) en attendant. & Moyenne \\
+\hline
+US20 & Actualités RSS & En tant que client, je veux consulter les dernières actualités mondiales. & Faible \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Conception du Sprint 4}
+\subsubsection{Architecture du Chatbot Luna}
+Luna utilise une architecture RAG (\textit{Retrieval-Augmented Generation}) pour fournir des réponses précises basées sur la carte du café.
+
+\subsection{Réalisation du Sprint 4}
+\subsubsection{Interface de Luna et Flux RSS}
+L'interface regroupe l'assistant virtuel et un flux d'actualités dynamique mis à jour via RSS.
+
+\subsubsection{Espace Divertissement (Jeux)}
+Plusieurs mini-jeux sont intégrés pour améliorer l'expérience utilisateur durant la préparation de la commande.
+
+%=========================================================
+\section*{Conclusion du Chapitre 4}
+%=========================================================
+L'achèvement de ces deux sprints finalise le développement de Coffee Time. La plateforme offre désormais une solution de gestion robuste pour le personnel et une expérience client riche et différenciante par rapport aux systèmes classiques.

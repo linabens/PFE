@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($pids = \\(netstat -ano | Select-String \":8081\\\\s\"\\).ForEach\\({ \\($_ -split '\\\\s+'\\)[-1] }\\) | Where-Object { $_ -match '^\\\\d+$' -and $_ -ne '0' } | Sort-Object -Unique; foreach \\($p in $pids\\) { Stop-Process -Id $p -Force -ErrorAction SilentlyContinue; Write-Host \"Killed $p\" })"
+    ]
+  }
+}

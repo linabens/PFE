@@ -54,7 +54,7 @@ const ChatFAB = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 95,
+    bottom: 150,
     right: 20,
     zIndex: 999,
   },

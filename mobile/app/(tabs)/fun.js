@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Coffee, Gamepad2, Newspaper, ChevronRight,
-  Star, Brain, Search, Grid3x3, Shuffle, LayoutGrid, X, BookOpen,
+  Star, Brain, Search, Grid3x3, Shuffle, LayoutGrid, BookOpen,
 } from 'lucide-react-native';
 import { useNews } from '../../src/context/NewsContext';
 
@@ -87,16 +87,6 @@ const GAMES = [
     color: '#A0785A',
     difficulty: 'Facile',
     points: 60,
-  },
-  {
-    id: 'tictactoe',
-    title: 'Tic-Tac-Toe',
-    subtitle: 'Classique contre l\'IA',
-    route: '/games/tictactoe',
-    icon: X,
-    color: '#775144',
-    difficulty: 'Moyen',
-    points: 90,
   },
   {
     id: 'coffeequiz',

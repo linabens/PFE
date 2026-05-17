@@ -2,9 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Colors, Spacing, Radius } from '../styles/theme';
 
-/**
- * Indicateur de saisie animé pour Luna
- */
 const TypingIndicator = () => {
   const dot1 = useRef(new Animated.Value(0.3)).current;
   const dot2 = useRef(new Animated.Value(0.3)).current;
@@ -49,7 +46,7 @@ const TypingIndicator = () => {
       <View style={styles.avatarSmall}>
         <Text style={styles.avatarEmoji}>☕</Text>
       </View>
-      
+
       <View style={styles.bubble}>
         <View style={styles.dotRow}>
           <Animated.View style={[styles.dot, { opacity: dot1 }]} />

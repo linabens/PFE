@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, TextInput, Animated, Easing, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, TextInput, Animated, Easing, Dimensions, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
   Search, Heart, Plus, Armchair, Sun, Moon, Flame,
-  Bell, Star,
+  Bell, Star, LogOut, Trophy
 } from 'lucide-react-native';
 import ProductImageFallback from '../../src/components/ui/ProductImageFallback';
 
@@ -15,6 +15,7 @@ import { useSessionStore } from '../../src/store/useSessionStore';
 import { menuApi } from '../../src/api/menuApi';
 import { assistanceApi } from '../../src/api/assistanceApi';
 import { promotionApi } from '../../src/api/promotionApi';
+import { newsApi } from '../../src/api/newsApi';
 import { API_BASE_URL } from '../../src/utils/constants';
 import CallServerModal from '../../src/components/CallServerModal';
 import ActiveOrderWidget from '../../src/components/ui/ActiveOrderWidget';
@@ -50,6 +51,7 @@ export default function HomeScreen() {
   const { tableId, tableNumber } = useSessionStore();
 
   const [promotions, setPromotions] = useState([]);
+  const [sportsNews, setSportsNews] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -103,9 +105,23 @@ export default function HomeScreen() {
       if (promoRes.success) {
         setPromotions(promoRes.data);
       }
+
+      // Fetch Sports News
+      try {
+        const newsRes = await newsApi.getSportsNews(6);
+        if (newsRes.success) setSportsNews(newsRes.data);
+      } catch (err) {
+        console.warn('News fetch failed:', err.message);
+      }
     } catch (e) {
-      console.error("Fetch data error details:", e);
-      showToast('Erreur de connexion au serveur');
+      if (e.message.includes('Session') || e.message.includes('token') || e.message.includes('401')) {
+        // Clear and redirect quietly for session errors
+        useSessionStore.getState().clearSession();
+        router.replace('/scan');
+      } else {
+        console.error("Fetch data error details:", e);
+        showToast('Erreur de connexion au serveur');
+      }
     } finally {
       setLoading(false);
     }
@@ -123,6 +139,31 @@ export default function HomeScreen() {
   const handleCallStaff = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowCallModal(true);
+  };
+
+  const handleExit = () => {
+    Alert.alert(
+      "Quitter Coffee Time ?",
+      "Votre session sera fermée. Vous devrez rescanner le QR code pour commander à nouveau.",
+      [
+        { text: "Annuler", style: "cancel" },
+        { 
+          text: "Quitter", 
+          style: "destructive",
+          onPress: async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            try {
+              await sessionApi.leaveSession();
+            } catch (e) {
+              // ignore
+            } finally {
+              useSessionStore.getState().clearSession();
+              router.replace('/scan');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const confirmCallStaff = async () => {
@@ -360,37 +401,36 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* SECTION 7: SPECIAL DU JOUR (Seasonal Products) */}
-            {specialsList.length > 0 && (
+            {/* SECTION: SPORT EN DIRECT (beIN Sports) */}
+            {sportsNews.length > 0 && (
               <View style={styles.sectionBlock}>
-                <View style={[styles.sectionTitleRow, { marginBottom: 16 }]}>
-                  <Sun size={18} color={C.primary} strokeWidth={2} style={{ marginRight: 8 }} />
-                  <Text style={styles.sectionTitle}>Spécial du jour</Text>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleRow}>
+                    <Trophy size={18} color="#D4AF37" strokeWidth={2.25} style={{ marginRight: 8 }} />
+                    <Text style={styles.sectionTitle}>Sport en Direct</Text>
+                  </View>
+                  <View style={styles.sourceBadge}>
+                    <Text style={styles.sourceBadgeTxt}>beIN & L'Équipe</Text>
+                  </View>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, paddingHorizontal: 16 }}>
-                  {specialsList.map(spec => (
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false} 
+                  style={{ marginHorizontal: -16, paddingHorizontal: 16 }}
+                >
+                  {sportsNews.map((news, idx) => (
                     <TouchableOpacity 
-                      key={spec.id} 
-                      style={styles.specCard}
-                      onPress={() => router.push({ pathname: `/product/${spec.id}`, params: { coffeeString: JSON.stringify(spec) } })}
+                      key={idx} 
+                      style={styles.newsCard}
+                      onPress={() => Alert.alert("Article", news.contentSnippet || news.title)}
                     >
-                      <View style={styles.specLeft}>
-                        <Image source={{ uri: spec.image_url }} style={styles.specImg} />
-                        <View style={styles.specBadge}><Text style={styles.specBadgeTxt}>SAISONNIER</Text></View>
+                      <View style={styles.newsTag}>
+                        <Text style={styles.newsTagTxt}>ACTU</Text>
                       </View>
-                      <View style={styles.specRight}>
-                        <View style={styles.specTimeRow}>
-                          <Animated.View style={[styles.blinkDot, { opacity: blinkAnim }]} />
-                          <Text style={styles.specTimeTxt}>Limité</Text>
-                        </View>
-                        <Text style={styles.specTitle}>{spec.name}</Text>
-                        <Text style={styles.specDesc} numberOfLines={2}>{spec.description}</Text>
-                        <View style={styles.specBot}>
-                          <Text style={styles.specPrice}>DT {Number(spec.price).toFixed(2).replace('.', ',')}</Text>
-                          <TouchableOpacity style={styles.specAdd} onPress={() => handleAddToCart(spec)}>
-                            <Plus size={14} color={C.bg} />
-                          </TouchableOpacity>
-                        </View>
+                      <Text style={styles.newsTitle} numberOfLines={2}>{news.title}</Text>
+                      <View style={styles.newsFooter}>
+                        <Text style={styles.newsSource}>{news.source?.split(' - ')[0] || 'Sport'}</Text>
+                        <Text style={styles.newsTime}>{new Date(news.pubDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
                       </View>
                     </TouchableOpacity>
                   ))}
@@ -428,6 +468,20 @@ export default function HomeScreen() {
         contentContainerStyle={styles.gridContent}
         columnWrapperStyle={styles.gridWrapper}
         renderItem={isLoading ? renderSkeleton : renderProduct}
+        ListFooterComponent={
+          <View style={styles.footerContainer}>
+            <View style={styles.divider} />
+            <TouchableOpacity 
+              style={styles.exitBtn} 
+              onPress={handleExit}
+              activeOpacity={0.7}
+            >
+              <LogOut size={18} color={C.rosewood} style={{ marginRight: 8 }} />
+              <Text style={styles.exitBtnText}>Quitter la table</Text>
+            </TouchableOpacity>
+            <Text style={styles.versionText}>Coffee Time v1.0.0</Text>
+          </View>
+        }
         showsVerticalScrollIndicator={false}
       />
 
@@ -538,5 +592,103 @@ const styles = StyleSheet.create({
   cardAddBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
   fabStaff: { position: 'absolute', bottom: 30, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: C.rosewood, justifyContent: 'center', alignItems: 'center', shadowColor: C.secondaryText, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6, zIndex: 50 },
   toastContainer: { position: 'absolute', bottom: 20, alignSelf: 'center', backgroundColor: C.mainText, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20, zIndex: 60, maxWidth: width - 48 },
-  toastText: { color: C.bg, fontFamily: FONT.poppinsSemi, fontSize: 11, textAlign: 'center' }
+  toastText: { color: C.bg, fontFamily: FONT.poppinsSemi, fontSize: 11, textAlign: 'center' },
+  footerContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  divider: {
+    width: '60%',
+    height: 1,
+    backgroundColor: C.border,
+    marginBottom: 30,
+    opacity: 0.6,
+  },
+  exitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: 'transparent',
+  },
+  exitBtnText: {
+    fontFamily: FONT.poppinsSemi,
+    fontSize: 14,
+    color: C.secondaryText,
+  },
+  versionText: {
+    fontFamily: FONT.poppins,
+    fontSize: 10,
+    color: C.tagline,
+    marginTop: 20,
+    opacity: 0.8,
+  },
+  newsCard: {
+    width: 200,
+    backgroundColor: '#3D1C0C',
+    borderRadius: 20,
+    padding: 16,
+    marginRight: 12,
+    justifyContent: 'space-between',
+    minHeight: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  newsTag: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  newsTagTxt: {
+    color: '#EAD9C9',
+    fontSize: 8,
+    fontFamily: FONT.poppinsSemi,
+    textTransform: 'uppercase',
+  },
+  newsTitle: {
+    color: '#FFFFFF',
+    fontFamily: FONT.poppinsSemi,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  newsFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingTop: 8,
+  },
+  newsSource: {
+    color: '#D4AF37',
+    fontSize: 9,
+    fontFamily: FONT.poppinsSemi,
+  },
+  newsTime: {
+    color: '#B89A87',
+    fontSize: 9,
+    fontFamily: FONT.poppins,
+  },
+  sourceBadge: {
+    backgroundColor: '#EAD9C9',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  sourceBadgeTxt: {
+    color: '#5C3221',
+    fontSize: 8,
+    fontFamily: FONT.poppinsSemi,
+  }
 });

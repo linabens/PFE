@@ -1,0 +1,61 @@
+@startuml DiagrammeDeClasseSprint1
+
+' --- Style professionnel Noir & Blanc ---
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam class {
+  BackgroundColor white
+  BorderColor black
+  ArrowColor black
+  FontColor black
+  FontSize 12
+}
+
+hide circle
+skinparam classAttributeIconSize 0
+
+title Diagramme de Classes — Sprint 1\nAuthentification et Gestion des Accès
+
+class Utilisateur {
+  - id : Integer
+  - full_name : String
+  - email : String
+  - password_hash : String
+  - phone : String
+  - avatar : String
+  - created_at : DateTime
+  + s'authentifier()
+  + modifierProfil()
+  + recupererMotDePasse()
+}
+
+class Admin {
+  + s'authentifier()
+  + modifierProfil()
+  + recupererMotDePasse()
+  + ajouterStaff()
+  + modifierStaff()
+  + supprimerStaff()
+  + voirStatistiques()
+}
+
+class Staff {
+  + s'authentifier()
+  + modifierProfil()
+  + recupererMotDePasse()
+}
+
+class TokenJWT {
+  - value : String
+  - expiry : DateTime
+  - type : String
+  + estValide() : Boolean
+}
+
+' --- Relations ---
+Utilisateur <|-- Admin
+Utilisateur <|-- Staff
+Utilisateur "1" -- "0..*" TokenJWT : génère >
+
+@enduml

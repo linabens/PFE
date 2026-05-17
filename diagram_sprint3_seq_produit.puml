@@ -1,0 +1,45 @@
+@startuml DiagrammeSequenceProduitUpdate
+
+title Diagramme de Séquence — Mise à jour d'un produit\nSprint 3
+
+actor "Admin" as Admin
+participant "Dashboard\n(Frontend)" as Dashboard
+participant "ProductController\n(Backend)" as Controller
+participant "ProductService\n(Backend)" as Service
+database "Base de Données" as Database
+
+Admin -> Dashboard: Accède à la gestion des produits
+Admin -> Dashboard: Sélectionne un produit et clique sur "Modifier"
+
+Dashboard -> Controller: PUT /api/products/:id\n{Authorization: Bearer token, données}
+activate Controller
+
+Controller -> Controller: Vérifier JWT token\net rôle "admin"
+
+alt Token invalide ou rôle insuffisant
+    Controller --> Dashboard: Erreur (403 Forbidden)
+    Dashboard --> Admin: Affiche message\n"Accès refusé"
+else Token valide et rôle admin
+    Controller -> Service: updateProduct(id, data)
+    activate Service
+
+    Service -> Database: UPDATE products SET ... WHERE id = ?
+    activate Database
+    Database --> Service: Produit mis à jour
+    deactivate Database
+
+    alt Produit non trouvé
+        Service --> Controller: Erreur (404 Not Found)
+        deactivate Service
+        Controller --> Dashboard: Réponse erreur (404)
+        Dashboard --> Admin: Affiche message\n"Produit introuvable"
+    else Mise à jour réussie
+        Service --> Controller: Retour succès (200)
+        deactivate Service
+        Controller --> Dashboard: Réponse succès\n{produit mis à jour}
+        deactivate Controller
+        Dashboard --> Admin: Affiche confirmation\n"Produit mis à jour avec succès"
+    end
+end
+
+@enduml

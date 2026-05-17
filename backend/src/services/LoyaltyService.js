@@ -189,6 +189,24 @@ class LoyaltyService {
     const count = await pool.query('SELECT COUNT(*)::int AS total FROM loyalty_accounts');
     return { accounts: result.rows, total: count.rows[0].total };
   }
+
+  /**
+   * Admin: update loyalty account
+   */
+  async updateAccount(id, data) {
+    const account = await LoyaltyModel.update(id, data);
+    if (!account) throw ApiError.notFound('Compte fidélité introuvable.');
+    return account;
+  }
+
+  /**
+   * Admin: delete loyalty account
+   */
+  async deleteAccount(id) {
+    const account = await LoyaltyModel.delete(id);
+    if (!account) throw ApiError.notFound('Compte fidélité introuvable.');
+    return account;
+  }
 }
 
 module.exports = new LoyaltyService();

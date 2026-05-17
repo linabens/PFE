@@ -1,0 +1,68 @@
+@startuml DiagrammeSequencePasserCommande
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam style strictuml
+skinparam defaultFontSize 12
+skinparam defaultFontName Arial
+
+skinparam sequence {
+    ParticipantPadding 40
+    MessagePadding 15
+    BoxPadding 30
+    LifeLineBorderThickness 1
+    ArrowThickness 1
+    ParticipantFontSize 12
+    ParticipantFontStyle bold
+    ActorFontSize 12
+}
+
+title sd Passer une commande
+
+actor "Client" as Client
+participant "Interface\nde commande" as UI
+participant "Contrôleur\nde commande" as Ctrl
+participant "Base de\ndonnées" as DB
+participant "Notification\n(Socket.IO)" as Socket
+
+Client -> UI : valider le panier et cliquer sur "Commander"
+UI -> Ctrl : POST /api/orders (items, table_id)
+activate Ctrl
+
+Ctrl -> Ctrl : vérifier la session active
+
+alt [Session expirée]
+    Ctrl --> UI : 401 — session invalide
+    deactivate Ctrl
+    UI --> Client : afficher "Rescanner le QR code"
+
+else [Session valide]
+    Ctrl -> DB : vérifier disponibilité des produits
+    activate DB
+
+    alt [Produit indisponible]
+        DB --> Ctrl : produit non actif
+        deactivate DB
+        Ctrl --> UI : 400 — produit indisponible
+        deactivate Ctrl
+        UI --> Client : afficher "Article non disponible"
+
+    else [Tous les produits disponibles]
+        DB --> Ctrl : produits confirmés
+        deactivate DB
+        Ctrl -> Ctrl : calculer le total de la commande
+        Ctrl -> DB : enregistrer la commande (statut "new")
+        activate DB
+        DB --> Ctrl : commande créée { id, total }
+        deactivate DB
+        Ctrl -> Socket : émettre notification au Staff
+        activate Socket
+        Socket --> Ctrl : notification envoyée
+        deactivate Socket
+        Ctrl --> UI : 201 OK { commande, numéro }
+        deactivate Ctrl
+        UI --> Client : afficher confirmation de commande
+    end
+end
+
+@enduml

@@ -143,6 +143,11 @@ interface AppState {
   fetchDashboardStats: () => Promise<void>;
   fetchDashboardSummary: (period: 'today' | 'week' | 'month') => Promise<void>;
 
+  // Loyalty Actions
+  addLoyalty: (member: { customer_name: string; phone_number?: string; customer_id_number?: string }) => Promise<void>;
+  updateLoyalty: (id: string, member: { customer_name: string; phone_number?: string; customer_id_number?: string; points?: number }) => Promise<void>;
+  deleteLoyalty: (id: string) => Promise<void>;
+
   advanceOrderStatus: (orderId: string, nextStatus: OrderStatus) => Promise<void>;
   handleAssistance: (id: string) => Promise<void>;
 
@@ -154,6 +159,7 @@ interface AppState {
   // Product Actions
   toggleProductActive: (id: string, currentStatus: boolean) => Promise<void>;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  updateProduct: (id: string, product: Partial<Omit<Product, 'id'>>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 
   // Category Actions
@@ -165,6 +171,8 @@ interface AppState {
   addTable: (table: { number: number; capacity: number }) => Promise<void>;
   deleteTable: (id: string) => Promise<void>;
   freeTable: (id: string) => Promise<void>;
+  fetchTableHistory: (id: string) => Promise<any[]>;
+  regenerateTableQr: (id: string) => Promise<{ qr_code: string; data: string }>;
 }
 
 const statusFlow: Record<OrderStatus, OrderStatus | null> = {
@@ -189,8 +197,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   allAssistanceRequests: [],
   promotions: [],
   dashboardStats: null,
-  user: localStorage.getItem('coffee_admin_user') 
-    ? JSON.parse(localStorage.getItem('coffee_admin_user')!) 
+  user: localStorage.getItem('coffee_admin_user')
+    ? JSON.parse(localStorage.getItem('coffee_admin_user')!)
     : null,
 
   setUser: (user) => set({ user }),
@@ -204,7 +212,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchInitialData: async () => {
     set({ loading: true, error: null });
     try {
-      await Promise.all([
+      await Promise.allSettled([
         get().fetchDashboardStats(),
         get().fetchCategories(),
         get().fetchProducts(),
@@ -266,7 +274,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         description: p.description,
         price: parseFloat(p.price),
         categoryId: p.category_id,
-        category: cats.find(c => c.id === p.category_id)?.name || 'Uncategorized',
+        category: p.category_name || cats.find((c: any) => c.id === p.category_id)?.name || 'Uncategorized',
         active: p.is_active,
         trending: p.is_trending,
         seasonal: p.is_seasonal,
@@ -394,6 +402,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().fetchProducts();
   },
 
+  updateProduct: async (id, product) => {
+    const payload: any = { ...product };
+    if (product.categoryId) payload.category_id = product.categoryId;
+    if (product.active !== undefined) payload.is_active = product.active;
+    if (product.trending !== undefined) payload.is_trending = product.trending;
+    if (product.seasonal !== undefined) payload.is_seasonal = product.seasonal;
+    if (product.imageUrl !== undefined) payload.image_url = product.imageUrl;
+
+    await api.patch(`/products/${id}`, payload);
+    await get().fetchProducts();
+  },
+
   deleteProduct: async (id) => {
     await api.delete(`/products/${id}`);
     await get().fetchProducts();
@@ -415,7 +435,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   addTable: async (table) => {
-    await api.post('/tables', {
+    await api.post('/admin/tables', {
       table_number: table.number,
       capacity: table.capacity
     });
@@ -423,13 +443,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   deleteTable: async (id) => {
-    await api.delete(`/tables/${id}`);
+    await api.delete(`/admin/tables/${id}`);
     await get().fetchTables();
   },
 
   freeTable: async (id) => {
     await api.post(`/admin/tables/${id}/sessions/close-all`, {});
     await get().fetchTables();
+  },
+
+  fetchTableHistory: async (id) => {
+    return await api.get<any[]>(`/admin/tables/${id}/history`);
+  },
+
+  regenerateTableQr: async (id) => {
+    const response = await api.post<string>(`/admin/tables/${id}/regenerate-qr`, {});
+    await get().fetchTables();
+    return { qr_code: 'temp', data: response }; // Assuming the backend returns the new token or URL directly in 'data' based on generic api response structure.
   },
 
   addPromotion: async (promo) => {
@@ -451,5 +481,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   togglePromotionStatus: async (id, currentStatus) => {
     await api.patch(`/promotions/${id}/status`, { is_active: !currentStatus });
     await get().fetchPromotions();
+  },
+
+  addLoyalty: async (member) => {
+    await api.post('/loyalty', member);
+    await get().fetchLoyalty();
+  },
+
+  updateLoyalty: async (id, member) => {
+    await api.put(`/loyalty/${id}`, member);
+    await get().fetchLoyalty();
+  },
+
+  deleteLoyalty: async (id) => {
+    await api.delete(`/loyalty/${id}`);
+    await get().fetchLoyalty();
   },
 }));

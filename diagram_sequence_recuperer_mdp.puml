@@ -1,0 +1,116 @@
+@startuml DiagrammeSequenceRecupererMdp
+
+title Diagramme de Séquence - Récupérer mot de passe\nSprint 1
+
+actor Utilisateur
+participant "ForgotPasswordPage\n(Frontend)" as ForgotPasswordPage
+participant "AuthController\n(Backend)" as AuthController
+participant "AuthService\n(Backend)" as AuthService
+participant "EmailService\n(Backend)" as EmailService
+database "Base de Données" as Database
+
+Utilisateur -> ForgotPasswordPage: Clique sur "Mot de passe oublié"
+ForgotPasswordPage --> Utilisateur: Affiche formulaire email
+
+Utilisateur -> ForgotPasswordPage: Saisit son email
+Utilisateur -> ForgotPasswordPage: Clique sur "Envoyer code"
+
+ForgotPasswordPage -> AuthController: POST /api/auth/forgot-password/request-code\n{email}
+activate AuthController
+
+AuthController -> AuthService: requestPasswordReset(email)
+activate AuthService
+
+AuthService -> Database: SELECT id FROM users WHERE email = ?
+activate Database
+Database --> AuthService: Résultat (userId ou null)
+deactivate Database
+
+alt Email n'existe pas
+    note over AuthService
+        Utilisateur non trouvé
+    end note
+    AuthService --> AuthController: Erreur (404 Not Found)
+    deactivate AuthService
+    AuthController --> ForgotPasswordPage: Réponse erreur (404)
+    deactivate AuthController
+    ForgotPasswordPage --> Utilisateur: Affiche message d'erreur\n"Email non trouvé"
+else Email existe
+    AuthService -> AuthService: Générer code de validation\n(6 chiffres aléatoires)\nExpiration: 15 minutes
+    AuthService -> Database: INSERT INTO password_reset_codes\n(user_id, code, expires_at)
+    Database --> AuthService: Code sauvegardé
+    deactivate Database
+
+    AuthService -> EmailService: sendResetCodeEmail(email, code)
+    activate EmailService
+    EmailService --> AuthService: Email envoyé
+    deactivate EmailService
+
+    AuthService --> AuthController: Succès (200)
+    deactivate AuthService
+    AuthController --> ForgotPasswordPage: Réponse succès
+    deactivate AuthController
+    ForgotPasswordPage --> Utilisateur: Affiche formulaire saisie code\n"Code envoyé à votre email"
+
+    Utilisateur -> ForgotPasswordPage: Saisit le code reçu
+    Utilisateur -> ForgotPasswordPage: Clique sur "Vérifier code"
+
+    ForgotPasswordPage -> AuthController: POST /api/auth/forgot-password/verify-code\n{email, code}
+    activate AuthController
+
+    AuthController -> AuthService: verifyResetCode(email, code)
+    activate AuthService
+
+    AuthService -> Database: SELECT * FROM password_reset_codes\nWHERE user_id = ? AND code = ? AND expires_at > NOW()
+    activate Database
+    Database --> AuthService: Résultat (code valide ou non)
+    deactivate Database
+
+    alt Code invalide ou expiré
+        note over AuthService
+            Code ne correspond pas\nOU\nCode expiré (> 15 min)
+        end note
+        AuthService --> AuthController: Erreur (401 Unauthorized)
+        deactivate AuthService
+        AuthController --> ForgotPasswordPage: Réponse erreur (401)
+        deactivate AuthController
+        ForgotPasswordPage --> Utilisateur: Affiche message d'erreur\n"Code invalide ou expiré"
+    else Code valide
+        AuthService -> AuthService: Générer token de réinitialisation\n(valide 10 minutes)
+        AuthService --> AuthController: Succès (200)\n{reset_token}
+        deactivate AuthService
+        AuthController --> ForgotPasswordPage: Réponse succès\n{reset_token}
+        deactivate AuthController
+        ForgotPasswordPage --> Utilisateur: Affiche formulaire changement mot de passe
+
+        Utilisateur -> ForgotPasswordPage: Saisit nouveau mot de passe
+        Utilisateur -> ForgotPasswordPage: Confirme nouveau mot de passe
+        Utilisateur -> ForgotPasswordPage: Clique sur "Réinitialiser"
+
+        ForgotPasswordPage -> AuthController: POST /api/auth/forgot-password/reset\n{email, new_password, reset_token}
+        activate AuthController
+
+        AuthController -> AuthService: resetPassword(email, new_password, reset_token)
+        activate AuthService
+
+        AuthService -> AuthService: Hasher nouveau mot de passe\nbcrypt.hash(password, 10)
+
+        AuthService -> Database: UPDATE users SET password_hash = ?\nWHERE email = ?
+        activate Database
+        Database --> AuthService: Mise à jour réussie
+        deactivate Database
+
+        AuthService -> Database: DELETE FROM password_reset_codes\nWHERE user_id = ?
+        Database --> AuthService: Code supprimé
+        deactivate Database
+
+        AuthService --> AuthController: Succès (200)
+        deactivate AuthService
+        AuthController --> ForgotPasswordPage: Réponse succès\n{message: "Mot de passe réinitialisé"}
+        deactivate AuthController
+        ForgotPasswordPage -> ForgotPasswordPage: Redirection vers login (2s)
+        ForgotPasswordPage --> Utilisateur: Redirection LoginPage\n"Mot de passe réinitialisé avec succès"
+    end
+end
+
+@enduml

@@ -1,0 +1,399 @@
+@startuml DiagrammeClassesFinal
+
+skinparam classAttributeIconSize 0
+skinparam circledCharacterRadius 0
+skinparam circledCharacterFontSize 0
+skinparam backgroundColor white
+skinparam classBorderColor #336699
+skinparam classBackgroundColor #DDEEFF
+skinparam arrowColor #336699
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 120
+
+' =====================
+' ENUMERATIONS
+' =====================
+
+enum OrderStatus <<enumeration>> {
+  NEW
+  BREWING
+  PREPARING
+  READY
+  COMPLETED
+}
+
+enum AssistanceStatus <<enumeration>> {
+  EN_ATTENTE
+  TRAITEE
+}
+
+enum LoyaltyTxType <<enumeration>> {
+  GAIN
+  ECHANGE
+}
+
+enum GameType <<enumeration>> {
+  QUIZ
+  MOTS_MELANGES
+  ROUE_CHANCEUSE
+  TIC_TAC_TOE
+  MOTS_CROISES
+  MEMOIRE
+  PUZZLE_IMAGE
+}
+
+' =====================
+' USER HIERARCHY
+' =====================
+
+abstract class User {
+  -int id
+  -string nom_complet
+  -string email
+  -string mot_de_passe_hash
+  -string avatar
+  -string question_securite
+  -string reponse_securite
+  +login(email, password)
+  +logout()
+  +updateProfile(name, email)
+  +changePassword(old, new)
+  +findById(id)
+  +findAll()
+  +delete(id)
+}
+
+class Admin {
+  +register(name, email, password, role)
+  +manageUsers()
+  +manageCategories()
+  +manageProducts()
+  +manageGames()
+  +generateReports()
+}
+
+class Staff {
+  +updateOrderStatus(orderId, status)
+  +getAssignedOrders()
+  +handleAssistanceRequest(requestId)
+}
+
+class ClientFidele {
+  +register(name, email, password)
+  +getOrders()
+  +getLoyaltyBalance()
+  +redeemPoints(points)
+}
+
+User <|-- Admin
+User <|-- Staff
+User <|-- ClientFidele
+
+' =====================
+' TABLE & SESSION
+' =====================
+
+class Table {
+  -int id
+  -int number
+  -string qrCode
+  -boolean isActive
+  +create(number)
+  +generateQRCode()
+  +toggleActive()
+  +findById(id)
+  +findAll()
+  +delete(id)
+}
+
+class Session {
+  -int id
+  -int tableId
+  -string token
+  -boolean isActive
+  -timestamp createdAt
+  -timestamp expiredAt
+  -timestamp last_active_at
+  +create(tableId)
+  +expire()
+  +isValid()
+  +findByToken(token)
+  +findByTable(tableId)
+  +getOrders()
+  +getAssistanceRequests()
+  +getChatHistory()
+}
+
+Table "1" --> "0..*" Session : héberge
+ClientFidele "0..1" --> "0..*" Session : ouvre
+
+' =====================
+' CATALOGUE
+' =====================
+
+class Category {
+  -int id
+  -string name
+  -string description
+  -string imageUrl
+  -boolean isActive
+  -timestamp createdAt
+  +create(name, description)
+  +update(name, description, imageUrl)
+  +delete(id)
+  +findById(id)
+  +findAll()
+  +findAllActive()
+  +getProducts()
+  +toggleActive()
+}
+
+class Product {
+  -int id
+  -int categoryId
+  -string name
+  -string description
+  -decimal price
+  -string imageUrl
+  -boolean isAvailable
+  -float[] embedding
+  -timestamp createdAt
+  +create(name, price, categoryId)
+  +update(name, description, price, imageUrl)
+  +delete(id)
+  +findById(id)
+  +findAll()
+  +findByCategory(categoryId)
+  +findAvailable()
+  +getOptions()
+  +toggleAvailability()
+  +updatePrice(price)
+}
+
+class ProductOption {
+  -int id
+  -int productId
+  -string name
+  -decimal extraPrice
+  +create(productId, name, extraPrice)
+  +update(name, extraPrice)
+  +delete(id)
+  +findById(id)
+  +findByProduct(productId)
+  +calculateFinalPrice(basePrice)
+}
+
+Category "1" *-- "0..*" Product : contient
+Product "1" *-- "0..*" ProductOption : contient
+
+' =====================
+' COMMANDES
+' =====================
+
+class Order {
+  -int id
+  -int sessionId
+  -int staffId
+  -OrderStatus status
+  -decimal totalAmount
+  -timestamp createdAt
+  -timestamp updatedAt
+  +create(sessionId, items)
+  +updateStatus(status, staffId)
+  +cancel()
+  +findById(id)
+  +findAll()
+  +findBySession(sessionId)
+  +findByStatus(status)
+  +findByDate(date)
+  +calculateTotal()
+  +generateInvoice()
+  +getItems()
+  +getStatusHistory()
+}
+
+class OrderItem {
+  -int id
+  -int orderId
+  -int productId
+  -int quantity
+  -decimal unitPrice
+  -decimal subtotal
+  +create(orderId, productId, quantity)
+  +update(quantity)
+  +delete(id)
+  +findByOrder(orderId)
+  +calculateSubtotal()
+  +getOptions()
+}
+
+class OrderItemOption {
+  -int id
+  -int orderItemId
+  -int productOptionId
+  -decimal extraPrice
+  +create(orderItemId, productOptionId)
+  +delete(id)
+  +findByOrderItem(orderItemId)
+  +applyOption()
+  +calculateExtraPrice()
+}
+
+class OrderStatusHistory {
+  -int id
+  -int orderId
+  -OrderStatus status
+  -int changedBy
+  -timestamp changedAt
+  +record(orderId, status, changedBy)
+  +findByOrder(orderId)
+  +getLastStatus(orderId)
+  +getHistory()
+}
+
+Session "1" *-- "0..*" Order : contient
+Staff "1" --> "0..*" Order : traite
+Order "1" *-- "1..*" OrderItem : contient
+Order "1" --> "0..*" OrderStatusHistory : suit
+OrderItem "1" *-- "0..*" OrderItemOption : inclut
+Product "1" --> "0..*" OrderItem : référencé par
+ProductOption "1" --> "0..*" OrderItemOption : appliquée via
+
+' =====================
+' CHAT
+' =====================
+
+class ChatMessage {
+  -int id
+  -int session_id
+  -string role {user, assistant}
+  -string content
+  -JSONB sources
+  -numeric confidence
+  -int response_ms
+  -timestamp created_at
+  +create(sessionId, role, content)
+  +findBySession(sessionId, limit)
+  +delete(id)
+}
+
+class ChatPreferences {
+  -int session_id
+  -string milk_type
+  -string[] dietary_tags
+  -decimal budget_limit
+  -int[] liked_product_ids
+  -string language
+  -timestamp updated_at
+  +updatePreferences(milk_type, dietary_tags, budget_limit)
+  +getPreferences(sessionId)
+  +deletePreferences(sessionId)
+}
+
+Session "1" *-- "0..*" ChatMessage : contient
+Session "1" --> "0..1" ChatPreferences : stocke
+
+' =====================
+' GAMES
+' =====================
+
+class Game {
+  -int id
+  -string title
+  -GameType type
+  -string description
+  -boolean isActive
+  +create(title, type, description)
+  +update(title, description)
+  +delete(id)
+  +findById(id)
+  +findAll()
+  +findAllActive()
+  +toggleActive()
+  +getLeaderboard()
+}
+
+class GameSession {
+  -int id
+  -int gameId
+  -int sessionId
+  -int score
+  -int duration
+  -timestamp playedAt
+  +create(gameId, sessionId)
+  +saveScore(score, duration)
+  +end()
+  +findById(id)
+  +findByGame(gameId)
+  +findBySession(sessionId)
+  +getResult()
+  +getBestScore(gameId)
+}
+
+Game "1" --> "0..*" GameSession : joué via
+Session "1" --> "0..*" GameSession : contient
+
+' =====================
+' LOYALTY
+' =====================
+
+class LoyaltyAccount {
+  -int id
+  -string customerIdNumber
+  -string customerNumber
+  -int totalEarned
+  -int totalSpent
+  -timestamp updatedAt
+  +create(userId)
+  +findByUser(userId)
+  +addPoints(points)
+  +redeemPoints(points)
+  +getBalance()
+  +getTransactions()
+  +canRedeem(points)
+  +reset()
+}
+
+class LoyaltyTransaction {
+  -int id
+  -int loyaltyAccountId
+  -int orderId
+  -int points
+  -LoyaltyTxType type
+  -timestamp createdAt
+  +create(accountId, orderId, type, points)
+  +record()
+  +findByAccount(accountId)
+  +findByOrder(orderId)
+  +calculatePointsFromOrder(amount)
+}
+
+ClientFidele "1" --> "0..1" LoyaltyAccount : possède
+LoyaltyAccount "1" *-- "0..*" LoyaltyTransaction : enregistre
+Order "1" --> "0..*" LoyaltyTransaction : génère
+
+' =====================
+' ASSISTANCE
+' =====================
+
+class AssistanceRequest {
+  -int id
+  -int sessionId
+  -string message
+  -AssistanceStatus status
+  -timestamp createdAt
+  +create(sessionId, message)
+  +send()
+  +markAsHandled()
+  +findById(id)
+  +findAll()
+  +findBySession(sessionId)
+  +findPending()
+  +delete(id)
+}
+
+Session "1" --> "0..*" AssistanceRequest : génère
+Staff "1" --> "0..*" AssistanceRequest : traite
+
+@enduml

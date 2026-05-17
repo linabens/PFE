@@ -1,0 +1,51 @@
+@startuml DiagrammeSequenceGestionCommande
+
+title Diagramme de Séquence — Traitement d'une commande\nSprint 3
+
+actor "Staff" as Staff
+participant "Dashboard\n(Frontend)" as Dashboard
+participant "OrderController\n(Backend)" as Controller
+participant "OrderService\n(Backend)" as Service
+participant "Socket.IO\n(Serveur)" as Socket
+database "Base de Données" as Database
+actor "Client" as Client
+
+Staff -> Dashboard: Consulte les commandes en cours\n(Live Orders)
+Dashboard -> Controller: GET /api/orders?status=pending\n{Authorization: Bearer token}
+activate Controller
+
+Controller -> Service: getActiveOrders()
+activate Service
+Service -> Database: SELECT * FROM orders WHERE status != 'delivered'
+activate Database
+Database --> Service: Liste des commandes actives
+deactivate Database
+Service --> Controller: Retour commandes (200)
+deactivate Service
+Controller --> Dashboard: Réponse {orders[]}
+deactivate Controller
+Dashboard --> Staff: Affiche les commandes en attente
+
+Staff -> Dashboard: Sélectionne une commande\net change le statut → "En préparation"
+Dashboard -> Controller: PATCH /api/orders/:id/status\n{status: "preparing"}
+activate Controller
+
+Controller -> Service: updateOrderStatus(id, status)
+activate Service
+Service -> Database: UPDATE orders SET status = 'preparing' WHERE id = ?
+activate Database
+Database --> Service: Statut mis à jour
+deactivate Database
+Service --> Controller: Succès (200)
+deactivate Service
+
+Controller -> Socket: emit('order:status_updated',\n{orderId, newStatus})
+activate Socket
+Socket --> Client: Notification temps réel\n"Votre commande est en préparation"
+deactivate Socket
+
+Controller --> Dashboard: Réponse succès {order mis à jour}
+deactivate Controller
+Dashboard --> Staff: Commande mise à jour\ndans la liste Live Orders
+
+@enduml

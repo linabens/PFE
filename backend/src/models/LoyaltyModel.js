@@ -147,6 +147,44 @@ class LoyaltyModel {
     );
     return result.rows[0] || null;
   }
+
+  /**
+   * Update loyalty account details
+   */
+  static async update(id, { customer_name, phone_number, customer_id_number, points }) {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `UPDATE loyalty_accounts 
+         SET customer_name = $1, 
+             phone_number = $2, 
+             customer_id_number = $3, 
+             points = $4,
+             updated_at = NOW()
+         WHERE id = $5
+         RETURNING *`,
+        [customer_name.trim(), phone_number || null, customer_id_number || null, points || 0, id]
+      );
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Delete loyalty account
+   */
+  static async delete(id) {
+    const client = await pool.connect();
+    try {
+      // First delete transactions associated with this account
+      await client.query('DELETE FROM loyalty_transactions WHERE loyalty_id = $1', [id]);
+      const result = await client.query('DELETE FROM loyalty_accounts WHERE id = $1 RETURNING *', [id]);
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
 }
 
 module.exports = LoyaltyModel;

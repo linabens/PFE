@@ -69,6 +69,12 @@ export const api = {
       method: 'PATCH', 
       body: JSON.stringify(body) 
     }),
+
+  put: <T>(endpoint: string, body: any) => 
+    apiRequest<T>(endpoint, { 
+      method: 'PUT', 
+      body: JSON.stringify(body) 
+    }),
   
   delete: <T>(endpoint: string) => 
     apiRequest<T>(endpoint, { method: 'DELETE' }),

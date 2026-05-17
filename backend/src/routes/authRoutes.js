@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/AuthController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 // Staff/admin login
 router.post('/login', AuthController.login);
-router.post('/register', AuthController.register);
+
+// Register: only an authenticated admin can create new accounts
+router.post('/register', authenticateToken, authorizeRoles('admin'), AuthController.register);
 
 // Password recovery
 router.post('/forgot-password', AuthController.forgotPassword);
